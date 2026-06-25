@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jellymint Admin Portal</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/src/style.css">
+  <style>
+    /* Admin Specific Overrides */
+    body { font-family: 'Outfit', sans-serif; background: var(--bg-primary); margin: 0; display: flex; height: 100vh; overflow: hidden; }
+    
+    /* Login / Denied Screens */
+    .overlay-screen { position: fixed; inset: 0; background: var(--bg-primary); display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column; }
+    .card { background: var(--bg-secondary); padding: 3rem; border-radius: 20px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid var(--border-color); max-width: 400px; width: 100%; }
+    .card h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.5rem; background: linear-gradient(135deg, var(--primary-mint), #2dd4bf); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .card p { color: var(--text-muted); margin-bottom: 2rem; }
+    .google-btn { background: white; color: #333; border: none; padding: 12px 24px; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; transition: all 0.3s ease; }
+    .google-btn:hover { background: #f8f9fa; transform: translateY(-2px); }
+    .google-icon { width: 24px; height: 24px; }
+    
+    /* Dashboard Layout */
+    .admin-app { display: none; width: 100%; height: 100%; }
+    .sidebar { width: 260px; background: var(--bg-secondary); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; }
+    .sidebar-header { padding: 20px; font-size: 1.5rem; font-weight: 700; color: var(--primary-mint); border-bottom: 1px solid var(--border-color); }
+    .nav-links { flex: 1; padding: 20px 0; }
+    .nav-item { padding: 12px 20px; color: var(--text-primary); cursor: pointer; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
+    .nav-item:hover, .nav-item.active { background: rgba(20, 184, 166, 0.1); color: var(--primary-mint); border-right: 3px solid var(--primary-mint); }
+    
+    .main-content { flex: 1; overflow-y: auto; padding: 30px; background: var(--bg-primary); }
+    .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .page-title { font-size: 2rem; font-weight: 600; }
+    
+    /* Grid & Cards */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: var(--bg-secondary); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); }
+    .stat-value { font-size: 2rem; font-weight: 700; color: var(--primary-mint); margin-top: 10px; }
+    .stat-label { color: var(--text-muted); font-size: 0.9rem; }
+    
+    /* Tables */
+    .table-container { background: var(--bg-secondary); border-radius: 12px; border: 1px solid var(--border-color); overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 15px 20px; border-bottom: 1px solid var(--border-color); }
+    th { color: var(--text-muted); font-weight: 500; font-size: 0.9rem; text-transform: uppercase; }
+    tr:last-child td { border-bottom: none; }
+    .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: 600; }
+    .badge.free { background: rgba(255, 255, 255, 0.1); color: #ccc; }
+    .badge.pro { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+    .badge.advanced { background: rgba(20, 184, 166, 0.2); color: var(--primary-mint); }
+    
+    /* Action Buttons */
+    .action-btn { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 6px 12px; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+    .action-btn:hover { background: var(--primary-mint); color: #000; border-color: var(--primary-mint); }
+
+    /* Modals */
+    .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 2000; }
+    .modal-content { background: var(--bg-secondary); padding: 30px; border-radius: 16px; width: 400px; border: 1px solid var(--border-color); }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; color: var(--text-muted); }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); }
+    .btn-primary { background: var(--primary-mint); color: #000; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; }
+    
+    .view { display: none; }
+    .view.active { display: block; }
+
+    /* Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: var(--primary-mint); }
+    input:checked + .slider:before { transform: translateX(22px); }
+  </style>
+</head>
+<body>
+
+  <!-- Loading Screen -->
+  <div id="loading-screen" class="overlay-screen">
+    <i class="fa-solid fa-spinner fa-spin fa-3x" style="color: var(--primary-mint);"></i>
+    <p style="margin-top: 20px; color: var(--text-muted);">Verifying Identity...</p>
+  </div>
+
+  <!-- Login Screen -->
+  <div id="login-screen" class="overlay-screen" style="display: none;">
+    <div class="card">
+      <img src="/favicon.svg" alt="Logo" width="60" style="margin-bottom: 10px;">
+      <h1>Admin Portal</h1>
+      <p>Sign in with an authorized Google Workspace account.</p>
+      <button id="google-login-btn" class="google-btn">
+        <svg class="google-icon" viewBox="0 0 24 24">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+          <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+        </svg>
+        Admin Sign In
+      </button>
+      <div id="login-error" style="color: #ef4444; margin-top: 15px;"></div>
+    </div>
+  </div>
+
+  <!-- Denied Screen -->
+  <div id="denied-screen" class="overlay-screen" style="display: none;">
+    <div class="card">
+      <i class="fa-solid fa-shield-halved fa-3x" style="color: #ef4444; margin-bottom: 20px;"></i>
+      <h1>Access Denied</h1>
+      <p>Your account is not whitelisted for administrative access.</p>
+      <button id="logout-btn" class="action-btn">Sign Out & Return</button>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="admin-app" class="admin-app">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <i class="fa-solid fa-leaf"></i> Jellymint Admin
+      </div>
+      <div class="nav-links">
+        <div class="nav-item active" data-target="dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
+        <div class="nav-item" data-target="users"><i class="fa-solid fa-users"></i> Users & Tokens</div>
+        <div class="nav-item" data-target="settings"><i class="fa-solid fa-gear"></i> Global Settings</div>
+      </div>
+      <div style="padding: 20px; border-top: 1px solid var(--border-color);">
+        <div style="margin-bottom: 10px; color: var(--text-muted); font-size: 0.9rem;" id="admin-email">admin@jellymint.com</div>
+        <button id="sidebar-logout" class="action-btn" style="width: 100%;"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <!-- Dashboard View -->
+      <div id="view-dashboard" class="view active">
+        <div class="page-header">
+          <div class="page-title">Overview</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Total Users</div>
+            <div class="stat-value" id="stat-users">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Tokens Consumed (24h)</div>
+            <div class="stat-value" id="stat-tokens">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Users View -->
+      <div id="view-users" class="view">
+        <div class="page-header">
+          <div class="page-title">User Management</div>
+        </div>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>IP / Location</th>
+                <th>Tier</th>
+                <th>Tokens</th>
+                <th>Last Active</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="users-table-body">
+              <!-- JS Populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Settings View -->
+      <div id="view-settings" class="view">
+        <div class="page-header">
+          <div class="page-title">Global Settings</div>
+          <button class="btn-primary" id="save-settings-btn" style="width: auto;">Save Changes</button>
+        </div>
+        
+        <div class="card" style="max-width: 600px; text-align: left; padding: 30px;">
+          <h3 style="margin-bottom: 20px;">Token Configuration</h3>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+            <div>
+              <div style="font-weight: 600;">Free For All Mode</div>
+              <div style="font-size: 0.9rem; color: var(--text-muted);">Disables all token limits globally.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-free-for-all">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>Free Tier Daily Limit</label>
+            <input type="number" id="setting-tier-free" value="5000">
+          </div>
+          <div class="form-group">
+            <label>PRO Tier Daily Limit</label>
+            <input type="number" id="setting-tier-pro" value="50000">
+          </div>
+          <div class="form-group">
+            <label>Advanced Tier Daily Limit</label>
+            <input type="number" id="setting-tier-advanced" value="1000000">
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Edit User Modal -->
+  <div id="edit-user-modal" class="modal">
+    <div class="modal-content">
+      <h3 style="margin-bottom: 20px;">Edit User</h3>
+      <input type="hidden" id="edit-uid">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="edit-name" readonly style="opacity: 0.7;">
+      </div>
+      <div class="form-group">
+        <label>Tier</label>
+        <select id="edit-tier">
+          <option value="free">Free</option>
+          <option value="pro">PRO</option>
+          <option value="advanced">Advanced</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Manual Token Adjustment</label>
+        <input type="number" id="edit-tokens" placeholder="Enter new token balance">
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 20px;">
+        <button class="action-btn" id="close-modal-btn" style="flex: 1;">Cancel</button>
+        <button class="btn-primary" id="save-user-btn" style="flex: 1; margin-top: 0;">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/app.js"></script>
+</body>
+</html>

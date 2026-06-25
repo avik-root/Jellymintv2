@@ -1,0 +1,20 @@
+{
+  "name": "jellymint",
+  "version": "2.0.0",
+  "description": "Jellymint Chatbot - A premium local LLM client using Ollama and AES-256-GCM encrypted history storage",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "@ngrok/ngrok": "^1.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "firebase-admin": "^14.1.0"
+  },
+  "author": "Antigravity",
+  "license": "MIT"
+}
