@@ -662,11 +662,6 @@ document.addEventListener('DOMContentLoaded', () => {
       let metricsHTML = '';
       if (metrics && metrics.eval_count && metrics.eval_duration) {
         try {
-          const sysRes = await fetch(API_BASE + '/api/sysinfo', {
-            headers: { 'ngrok-skip-browser-warning': 'true' }
-          });
-          const sysData = await sysRes.json();
-          
           const timeSec = (metrics.total_duration / 1e9).toFixed(2);
           const tps = (metrics.eval_count / (metrics.eval_duration / 1e9)).toFixed(1);
           
@@ -674,8 +669,6 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="message-metrics">
               <span class="metric-item"><i class="fa-solid fa-bolt"></i> ${tps} tok/s</span>
               <span class="metric-item"><i class="fa-regular fa-clock"></i> ${timeSec}s</span>
-              <span class="metric-item"><i class="fa-solid fa-microchip"></i> CPU ${sysData.cpu}%</span>
-              <span class="metric-item"><i class="fa-solid fa-memory"></i> RAM ${sysData.ram}%</span>
             </div>
           `;
           updateBotBubble(botResponse, metricsHTML);
@@ -752,6 +745,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('bot-name').textContent = metadata.name || 'Jellymint';
         document.getElementById('bot-version').textContent = metadata.version || 'v2.0.0';
         document.getElementById('header-version').textContent = metadata.version || 'v2.0.0';
+        const sidebarVer = document.getElementById('sidebar-version-display');
+        if (sidebarVer) {
+          sidebarVer.textContent = metadata.version || '2.0.0';
+        }
       }
     } catch (e) {
       console.warn('Failed to fetch version metadata:', e);

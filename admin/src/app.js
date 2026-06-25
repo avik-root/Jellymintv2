@@ -117,10 +117,50 @@ document.querySelectorAll('.nav-item').forEach(item => {
 // --- Dashboard Logic ---
 let activityChartInstance = null;
 let tiersChartInstance = null;
+let apiBaseUrl = '';
 
 async function initDashboard() {
   await loadSettings();
   await loadUsers();
+  
+  if (apiBaseUrl) {
+    fetchSystemStats();
+    fetchActiveModel();
+    setInterval(fetchSystemStats, 3000);
+    setInterval(fetchActiveModel, 10000);
+  }
+}
+
+async function fetchSystemStats() {
+  if (!apiBaseUrl) return;
+  try {
+    const res = await fetch(apiBaseUrl + '/api/sysinfo', {
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      document.getElementById('stat-cpu').textContent = `${data.cpu}%`;
+      document.getElementById('stat-ram').textContent = `${data.ram}%`;
+    }
+  } catch (e) {
+    // Suppress warning
+  }
+}
+
+async function fetchActiveModel() {
+  if (!apiBaseUrl) return;
+  try {
+    const res = await fetch(apiBaseUrl + '/api/models', {
+      headers: { 'ngrok-skip-browser-warning': 'true' }
+    });
+    if (res.ok) {
+      const data = await res.json();
+      const modelName = data.models?.[0]?.name || 'No model loaded';
+      document.getElementById('stat-model').textContent = modelName;
+    }
+  } catch (e) {
+    document.getElementById('stat-model').textContent = 'Offline';
+  }
 }
 
 // Settings
@@ -129,6 +169,7 @@ async function loadSettings() {
   const snap = await getDoc(settingsRef);
   if (snap.exists()) {
     const data = snap.data();
+    apiBaseUrl = data.apiUrl || '';
     document.getElementById('setting-free-for-all').checked = data.freeForAll || false;
     document.getElementById('setting-tunnel-enabled').checked = data.tunnelEnabled !== false;
     document.getElementById('setting-ollama-host').value = data.ollamaHost || 'http://127.0.0.1:11434';

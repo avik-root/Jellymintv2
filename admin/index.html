@@ -65,16 +65,19 @@
 
     /* Modals */
     .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 2000; }
-    .modal-content { background: var(--bg-secondary); padding: 30px; border-radius: 16px; width: 400px; border: 1px solid var(--border-color); }
+    .modal-content { background: var(--bg-secondary); padding: 30px; border-radius: 16px; width: 400px; border: 1px solid var(--border-color); box-sizing: border-box; }
     .form-group { margin-bottom: 15px; }
     .form-group label { display: block; margin-bottom: 5px; color: var(--text-muted); }
     .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box; }
     
-    .btn-primary { background: var(--primary-mint); color: #000; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .btn-primary { background: var(--primary-mint); color: #000; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; box-sizing: border-box; }
     .btn-primary:hover { background: #2dd4bf; transform: translateY(-1px); }
     
-    .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; box-sizing: border-box; }
     .btn-secondary:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-1px); }
+
+    .modal-actions { display: flex; gap: 12px; margin-top: 24px; width: 100%; box-sizing: border-box; }
+    .modal-actions .btn-primary, .modal-actions .btn-secondary { flex: 1; height: 42px; padding: 0; display: flex; align-items: center; justify-content: center; }
     
     .view { display: none; }
     .view.active { display: block; }
@@ -171,6 +174,18 @@
           <div class="stat-card">
             <div class="stat-label">Total Tokens Allocated</div>
             <div class="stat-value" id="stat-tokens">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Host CPU Usage</div>
+            <div class="stat-value" id="stat-cpu">--%</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Host RAM Usage</div>
+            <div class="stat-value" id="stat-ram">--%</div>
+          </div>
+          <div class="stat-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+            <div class="stat-label">Active Ollama Model</div>
+            <div class="stat-value" id="stat-model" style="font-size: 1.15rem; margin-top: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600;">Loading...</div>
           </div>
         </div>
 
@@ -289,9 +304,9 @@
         <label>Manual Token Adjustment</label>
         <input type="number" id="edit-tokens" placeholder="Enter new token balance">
       </div>
-      <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button class="btn-secondary" id="close-modal-btn" style="flex: 1;">Cancel</button>
-        <button class="btn-primary" id="save-user-btn" style="flex: 1;">Save</button>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="close-modal-btn">Cancel</button>
+        <button class="btn-primary" id="save-user-btn">Save</button>
       </div>
     </div>
   </div>
