@@ -2,26 +2,23 @@ import { auth, db, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot,
 
 let API_BASE = import.meta.env.VITE_API_URL || '';
 let currentUser = null;
-let activeSession = null;
 let sessions = [];
 let activeModels = [];
 let isGenerating = false;
 
-// DOM Elements
-const sidebar = document.getElementById('sidebar');
-const sidebarToggleOpen = document.getElementById('sidebar-toggle-open');
-const sidebarToggleClose = document.getElementById('sidebar-toggle-close');
-const modelSelect = document.getElementById('model-select');
-const refreshModelsBtn = document.getElementById('refresh-models');
-const ollamaErrorBanner = document.getElementById('ollama-error-banner');
-const messagesContainer = document.getElementById('messages-container');
-const chatInput = document.getElementById('chat-input');
-const sendBtn = document.getElementById('send-btn');
-const emptyState = document.getElementById('empty-state');
-const suggestionCards = document.querySelectorAll('.suggestion-card');
-const currentModelSpan = document.getElementById('current-model');
-
 document.addEventListener('DOMContentLoaded', () => {
+  // DOM Elements — all inside DOMContentLoaded so they are never null
+  const sidebar = document.getElementById('sidebar');
+  const sidebarToggleOpen = document.getElementById('sidebar-toggle-open');
+  const sidebarToggleClose = document.getElementById('sidebar-toggle-close');
+  const modelSelect = document.getElementById('model-select');
+  const refreshModelsBtn = document.getElementById('refresh-models-btn');
+  const ollamaErrorBanner = document.getElementById('ollama-error-banner');
+  const messagesContainer = document.getElementById('messages-container');
+  const chatInput = document.getElementById('chat-input');
+  const sendBtn = document.getElementById('send-btn');
+  const suggestionCards = document.querySelectorAll('.suggestion-card');
+  const currentModelSpan = document.getElementById('current-loaded-model');
   const newChatBtn = document.getElementById('new-chat-btn');
   const chatHistoryList = document.getElementById('chat-history-list');
   const welcomeScreen = document.getElementById('welcome-screen');
@@ -31,6 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
   
   let activeSessionId = null;
   let activeController = null;
+
   // Firebase Auth State Observer
   let unsubscribeUser = null;
   onAuthStateChanged(auth, async (user) => {
@@ -210,14 +208,11 @@ document.addEventListener('DOMContentLoaded', () => {
           modelSelect.appendChild(option);
         });
 
-        // Automatically select the best fitting model (requested qwen3, falling back to qwen2.5/qwen/first item)
+        // Automatically select the best fitting model
         let selectedModel = '';
         
-        // Search for qwen3 first
         const qwen3Model = activeModels.find(m => m.name.toLowerCase().includes('qwen3'));
-        // Search for qwen2.5
-        const qwen25Model = activeModels.find(m => m.name.toLowerCase().includes('qwen2.5') || m.name.toLowerCase().includes('qwen2.5'));
-        // Search for general qwen
+        const qwen25Model = activeModels.find(m => m.name.toLowerCase().includes('qwen2.5'));
         const qwenModel = activeModels.find(m => m.name.toLowerCase().includes('qwen'));
         
         if (qwen3Model) {
@@ -797,6 +792,5 @@ document.addEventListener('DOMContentLoaded', () => {
   fetchVersion();
   fetchSystemStats();
   setInterval(fetchSystemStats, 2000);
-  
-  fetchModels();
 });
+
