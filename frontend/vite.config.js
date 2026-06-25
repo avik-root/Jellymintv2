@@ -11,7 +11,8 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         chat: resolve(__dirname, 'chat/index.html'),
-        login: resolve(__dirname, 'login/index.html')
+        login: resolve(__dirname, 'login/index.html'),
+        profile: resolve(__dirname, 'profile/index.html')
       }
     }
   }

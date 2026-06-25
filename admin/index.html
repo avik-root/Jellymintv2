@@ -11,6 +11,12 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/src/style.css">
   <style>
+    /* Map admin CSS variables to the design system variables from style.css */
+    :root {
+      --bg-primary: var(--bg-main, #090d16);
+      --bg-secondary: var(--bg-sidebar, #0f1424);
+    }
+
     /* Admin Specific Overrides */
     body { font-family: 'Outfit', sans-serif; background: var(--bg-primary); margin: 0; display: flex; height: 100vh; overflow: hidden; }
     

@@ -32,17 +32,31 @@ onAuthStateChanged(auth, async (user) => {
 
     let isAdmin = false;
     
-    if (user.email === SUPER_ADMIN) {
+    // Normalize both emails for comparison (trim whitespace, lowercase)
+    const userEmail = (user.email || '').trim().toLowerCase();
+    const superAdminEmail = (SUPER_ADMIN || '').trim().toLowerCase();
+
+    if (userEmail && superAdminEmail && userEmail === superAdminEmail) {
       isAdmin = true;
-      // Auto-add super admin to DB with timeout
-      await withTimeout(setDoc(doc(db, 'admins', user.email), {
-        addedAt: new Date(),
-        role: 'superadmin'
-      }, { merge: true }), 5000);
+      // Auto-add super admin to DB with timeout — non-blocking
+      try {
+        await withTimeout(setDoc(doc(db, 'admins', user.email), {
+          addedAt: new Date(),
+          role: 'superadmin'
+        }, { merge: true }), 5000);
+      } catch (dbError) {
+        console.warn("Could not write super admin to Firestore (non-fatal):", dbError);
+        // Super admin is still allowed in even if DB write fails
+      }
     } else {
-      const adminDoc = await withTimeout(getDoc(doc(db, 'admins', user.email)), 5000);
-      if (adminDoc.exists()) {
-        isAdmin = true;
+      try {
+        const adminDoc = await withTimeout(getDoc(doc(db, 'admins', user.email)), 5000);
+        if (adminDoc.exists()) {
+          isAdmin = true;
+        }
+      } catch (dbError) {
+        console.error("Firestore admin check failed:", dbError);
+        // If Firestore is down, fall through to denied
       }
     }
 
@@ -59,7 +73,7 @@ onAuthStateChanged(auth, async (user) => {
     if (error.message === 'FIRESTORE_TIMEOUT') {
       loginError.innerHTML = "<strong>Firestore Database not found!</strong><br>You MUST create the Firestore Database in the Firebase Console and then download your `serviceAccountKey.json` into the `backend/` folder before continuing.";
     } else {
-      loginError.textContent = "Error verifying admin status.";
+      loginError.textContent = "Error verifying admin status: " + error.message;
     }
   }
 });

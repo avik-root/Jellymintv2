@@ -67,6 +67,12 @@ document.addEventListener('DOMContentLoaded', () => {
       currentUser = user;
       document.getElementById('bot-name').textContent = user.displayName || 'User';
 
+      // Update sidebar avatar with user's Google photo
+      const sidebarAvatar = document.getElementById('sidebar-avatar');
+      if (sidebarAvatar && user.photoURL) {
+        sidebarAvatar.innerHTML = `<img src="${user.photoURL}" alt="${user.displayName || 'User'}" referrerpolicy="no-referrer">`;
+      }
+
       if (signOutBtn) {
         signOutBtn.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out';
       }
