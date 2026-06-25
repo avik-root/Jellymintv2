@@ -625,6 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (parsed.message && parsed.message.content) {
               botResponse += parsed.message.content;
               updateBotBubble(botResponse);
+              scrollToBottom();
             }
             if (parsed.done) {
               metrics = {
@@ -646,6 +647,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (parsed.message && parsed.message.content) {
             botResponse += parsed.message.content;
             updateBotBubble(botResponse);
+            scrollToBottom();
           }
           if (parsed.done) {
             metrics = {

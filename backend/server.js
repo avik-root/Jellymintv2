@@ -8,6 +8,7 @@ import os from 'os';
 import { fileURLToPath } from 'url';
 import ngrok from '@ngrok/ngrok';
 import { initializeApp, applicationDefault, getApps } from 'firebase-admin/app';
+import { execSync } from 'child_process';
 import { getAuth } from 'firebase-admin/auth';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
@@ -107,6 +108,15 @@ function getCpuUsage() {
 // Init the cpu time
 getCpuUsage();
 
+function getGpuUsage() {
+  try {
+    const output = execSync('nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits', { stdio: 'pipe' });
+    return parseInt(output.toString().trim()) || 0;
+  } catch (e) {
+    return 0; // Fallback for environments without Nvidia GPUs
+  }
+}
+
 app.get('/api/sysinfo', (req, res) => {
   const totalMem = os.totalmem();
   const freeMem = os.freemem();
@@ -114,8 +124,9 @@ app.get('/api/sysinfo', (req, res) => {
   const ramPercent = Math.floor((usedMem / totalMem) * 100);
   
   const cpuPercent = getCpuUsage();
+  const gpuPercent = getGpuUsage();
   
-  res.json({ cpu: cpuPercent, ram: ramPercent });
+  res.json({ cpu: cpuPercent, ram: ramPercent, gpu: gpuPercent });
 });
 
 // Chatbot Metadata API
@@ -231,21 +242,37 @@ app.post('/api/chat', verifyToken, async (req, res) => {
     // 3. Stream to client and track token usage
     const reader = ollamaResponse.body;
     let eval_count = 0;
+    let buffer = '';
     
     for await (const chunk of reader) {
       res.write(chunk);
       
-      const str = chunk.toString();
-      const lines = str.split('\n');
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        try {
-          const parsed = JSON.parse(line);
-          if (parsed.eval_count) {
-            eval_count += parsed.eval_count;
-          }
-        } catch(e) { }
+      buffer += chunk.toString();
+      let boundary = buffer.lastIndexOf('\n');
+      if (boundary !== -1) {
+        const completeLines = buffer.substring(0, boundary).split('\n');
+        buffer = buffer.substring(boundary + 1);
+        
+        for (const line of completeLines) {
+          if (!line.trim()) continue;
+          try {
+            const parsed = JSON.parse(line);
+            if (parsed.eval_count) {
+              eval_count += parsed.eval_count;
+            }
+          } catch(e) { }
+        }
       }
+    }
+    
+    // Process any remaining buffer
+    if (buffer.trim()) {
+      try {
+        const parsed = JSON.parse(buffer);
+        if (parsed.eval_count) {
+          eval_count += parsed.eval_count;
+        }
+      } catch(e) { }
     }
     
     res.end();
