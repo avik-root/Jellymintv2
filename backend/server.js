@@ -280,6 +280,7 @@ app.listen(PORT, async () => {
       const listener = await ngrok.forward({
         addr: PORT,
         authtoken: process.env.NGROK_AUTHTOKEN,
+        domain: 'spousal-scrabble-stamina.ngrok-free.dev'
       });
       console.log(` Ngrok tunnel active at: ${listener.url()}`);
       console.log(` Use this URL as VITE_API_URL in your frontend.`);
@@ -295,6 +296,17 @@ app.listen(PORT, async () => {
       }
     } catch (err) {
       console.error(` Ngrok tunnel failed to start:`, err);
+      // Fallback: If tunnel is already online or fails, but we have a known static domain,
+      // we still ensure Firestore settings have the correct URL so the frontend can connect!
+      if (db) {
+        try {
+          const fallbackUrl = "https://spousal-scrabble-stamina.ngrok-free.dev";
+          await db.collection('settings').doc('global').set({ apiUrl: fallbackUrl }, { merge: true });
+          console.log(` \x1b[32mFallback: Synced static API URL (${fallbackUrl}) to Firestore!\x1b[0m`);
+        } catch (e) {
+          console.error(` Failed to sync fallback API URL to Firestore:`, e);
+        }
+      }
     }
   } else {
     console.log(` NGROK_AUTHTOKEN not found, ngrok tunnel disabled.`);
