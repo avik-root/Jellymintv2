@@ -1,4 +1,4 @@
-import { auth, db, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot } from './firebase.js';
+import { auth, db, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot, signInWithPopup, googleProvider } from './firebase.js';
 
 const API_BASE = import.meta.env.VITE_API_URL || '';
 let currentUser = null;
@@ -32,14 +32,25 @@ document.addEventListener('DOMContentLoaded', () => {
   // Firebase Auth State Observer
   let unsubscribeUser = null;
   onAuthStateChanged(auth, (user) => {
+    const signOutBtn = document.getElementById('sign-out-btn');
     if (!user) {
       if (unsubscribeUser) unsubscribeUser();
+      
+      if (signOutBtn) {
+        signOutBtn.innerHTML = '<i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In';
+      }
+
       if (sessions.length === 0) {
         startNewSession();
       }
     } else {
       currentUser = user;
       document.getElementById('bot-name').textContent = user.displayName || 'User';
+
+      if (signOutBtn) {
+        signOutBtn.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out';
+      }
+
       loadHistoryFromServer();
 
       // Listen to token balance
@@ -56,8 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const signOutBtn = document.getElementById('sign-out-btn');
   if (signOutBtn) {
     signOutBtn.addEventListener('click', async () => {
+      if (!currentUser) {
+        window.location.href = '/login';
+        return;
+      }
       try {
         await signOut(auth);
+        window.location.reload();
       } catch (error) {
         console.error('Error signing out', error);
       }
@@ -492,9 +508,14 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!userPrompt || !model || isGenerating) return;
 
     if (!currentUser) {
-      sessionStorage.setItem('pendingPrompt', userPrompt);
-      window.location.href = '/login';
-      return;
+      try {
+        await signInWithPopup(auth, googleProvider);
+        sessionStorage.setItem('pendingPrompt', userPrompt);
+        return;
+      } catch (error) {
+        console.error("Popup login failed", error);
+        return;
+      }
     }
 
     // Reset textarea
