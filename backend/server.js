@@ -7,7 +7,9 @@ import dotenv from 'dotenv';
 import os from 'os';
 import { fileURLToPath } from 'url';
 import ngrok from '@ngrok/ngrok';
-import admin from 'firebase-admin';
+import { initializeApp, applicationDefault, getApps } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -36,9 +38,9 @@ dotenv.config();
 
 // Initialize Firebase Admin
 try {
-  if (!admin.apps.length) {
-    admin.initializeApp({
-      credential: admin.credential.applicationDefault()
+  if (getApps().length === 0) {
+    initializeApp({
+      credential: applicationDefault()
     });
   }
 } catch (error) {
@@ -46,7 +48,7 @@ try {
   console.error(error);
 }
 
-const db = admin.firestore ? admin.firestore() : null;
+const db = getApps().length > 0 ? getFirestore() : null;
 
 const PORT = process.env.PORT || 3000;
 const OLLAMA_HOST = process.env.OLLAMA_HOST || 'http://127.0.0.1:11434';
@@ -68,7 +70,7 @@ async function verifyToken(req, res, next) {
 
   const token = authHeader.split('Bearer ')[1];
   try {
-    const decoded = await admin.auth().verifyIdToken(token);
+    const decoded = await getAuth().verifyIdToken(token);
     req.user = decoded;
     next();
   } catch (error) {
@@ -173,7 +175,7 @@ app.post('/api/chat', verifyToken, async (req, res) => {
           email: req.user.email || '',
           tokens: userTokens, 
           tier: 'free', 
-          lastActive: admin.firestore.FieldValue.serverTimestamp(), 
+          lastActive: FieldValue.serverTimestamp(), 
           ip: ip 
         });
       } else {
@@ -193,7 +195,7 @@ app.post('/api/chat', verifyToken, async (req, res) => {
         // Always update IP and last active
         await userRef.update({
           ip: ip,
-          lastActive: admin.firestore.FieldValue.serverTimestamp(),
+          lastActive: FieldValue.serverTimestamp(),
           tokens: userTokens
         });
       }
@@ -251,7 +253,7 @@ app.post('/api/chat', verifyToken, async (req, res) => {
     // 4. Deduct tokens
     if (!settings.freeForAll && eval_count > 0) {
       await userRef.update({
-        tokens: admin.firestore.FieldValue.increment(-eval_count)
+        tokens: FieldValue.increment(-eval_count)
       });
     }
 

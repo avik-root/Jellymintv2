@@ -15,7 +15,7 @@
   <!-- Prism.js for code syntax highlighting -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
   <!-- Main CSS -->
-  <script type="module" crossorigin src="/assets/index-CqhivHC4.js"></script>
+  <script type="module" crossorigin src="/assets/index-CXIw8J-4.js"></script>
   <link rel="stylesheet" crossorigin href="/assets/index-DUcqP4D4.css">
 </head>
 <body>
@@ -50,9 +50,15 @@
           </div>
           <div class="profile-info">
             <div class="username" id="bot-name">Jellymint</div>
-            <div class="version" id="bot-version">v2.0.0</div>
+            <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+              <div class="version" id="bot-version">v2.0.0</div>
+              <div class="version" id="token-balance" style="color: var(--primary-mint); font-weight: bold; background: rgba(20, 184, 166, 0.1); padding: 2px 6px; border-radius: 4px;">-- tokens</div>
+            </div>
           </div>
         </div>
+        <button id="sign-out-btn" style="margin-top: 10px; width: 100%; padding: 8px; border-radius: 6px; background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+        </button>
       </div>
     </aside>
 
