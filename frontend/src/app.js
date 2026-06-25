@@ -1,37 +1,59 @@
 import { auth, db, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot, signInWithPopup, googleProvider } from './firebase.js';
 
-const API_BASE = import.meta.env.VITE_API_URL || '';
+let API_BASE = import.meta.env.VITE_API_URL || '';
 let currentUser = null;
+let activeSession = null;
+let sessions = [];
+let activeModels = [];
+let isGenerating = false;
+
+// DOM Elements
+const sidebar = document.getElementById('sidebar');
+const sidebarToggleOpen = document.getElementById('sidebar-toggle-open');
+const sidebarToggleClose = document.getElementById('sidebar-toggle-close');
+const modelSelect = document.getElementById('model-select');
+const refreshModelsBtn = document.getElementById('refresh-models');
+const ollamaErrorBanner = document.getElementById('ollama-error-banner');
+const messagesContainer = document.getElementById('messages-container');
+const chatInput = document.getElementById('chat-input');
+const sendBtn = document.getElementById('send-btn');
+const emptyState = document.getElementById('empty-state');
+const suggestionCards = document.querySelectorAll('.suggestion-card');
+const currentModelSpan = document.getElementById('current-model');
 
 document.addEventListener('DOMContentLoaded', () => {
-  // DOM Elements
-  const sidebar = document.getElementById('sidebar');
-  const sidebarToggleClose = document.getElementById('sidebar-toggle-close');
-  const sidebarToggleOpen = document.getElementById('sidebar-toggle-open');
   const newChatBtn = document.getElementById('new-chat-btn');
   const chatHistoryList = document.getElementById('chat-history-list');
-  const modelSelect = document.getElementById('model-select');
-  const refreshModelsBtn = document.getElementById('refresh-models-btn');
   const welcomeScreen = document.getElementById('welcome-screen');
-  const messagesContainer = document.getElementById('messages-container');
-  const ollamaErrorBanner = document.getElementById('ollama-error-banner');
   const retryOllamaBtn = document.getElementById('retry-ollama-btn');
-  const chatInput = document.getElementById('chat-input');
-  const sendBtn = document.getElementById('send-btn');
   const stopGenerationBtn = document.getElementById('stop-generation-btn');
   const currentLoadedModel = document.getElementById('current-loaded-model');
-  const suggestionCards = document.querySelectorAll('.suggestion-card');
-  const currentModelSpan = document.getElementById('current-loaded-model');
-
-  let sessions = [];
+  
   let activeSessionId = null;
-  let activeModels = [];
   let activeController = null;
-  let isGenerating = false;
-
   // Firebase Auth State Observer
   let unsubscribeUser = null;
-  onAuthStateChanged(auth, (user) => {
+  onAuthStateChanged(auth, async (user) => {
+    
+    // Timeout helper
+    const withTimeout = (promise, ms) => Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('FIRESTORE_TIMEOUT')), ms))
+    ]);
+
+    // Auto-discover the backend ngrok API URL from Firestore
+    try {
+      const dbSnap = await withTimeout(getDoc(doc(db, 'settings', 'global')), 5000);
+      if (dbSnap.exists() && dbSnap.data().apiUrl) {
+        API_BASE = dbSnap.data().apiUrl;
+      }
+    } catch (e) {
+      console.warn("Could not fetch dynamic API URL from Firestore", e);
+    }
+    
+    // Fetch models immediately after API URL discovery
+    fetchModels();
+
     const signOutBtn = document.getElementById('sign-out-btn');
     if (!user) {
       if (unsubscribeUser) unsubscribeUser();

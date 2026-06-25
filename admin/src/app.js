@@ -24,18 +24,23 @@ onAuthStateChanged(auth, async (user) => {
   showScreen(loadingScreen);
 
   try {
-    // Check if user is Super Admin or in admins collection
+    // Timeout helper for Firestore hangs
+    const withTimeout = (promise, ms) => Promise.race([
+      promise,
+      new Promise((_, reject) => setTimeout(() => reject(new Error('FIRESTORE_TIMEOUT')), ms))
+    ]);
+
     let isAdmin = false;
     
     if (user.email === SUPER_ADMIN) {
       isAdmin = true;
-      // Auto-add super admin to DB
-      await setDoc(doc(db, 'admins', user.email), {
+      // Auto-add super admin to DB with timeout
+      await withTimeout(setDoc(doc(db, 'admins', user.email), {
         addedAt: new Date(),
         role: 'superadmin'
-      }, { merge: true });
+      }, { merge: true }), 5000);
     } else {
-      const adminDoc = await getDoc(doc(db, 'admins', user.email));
+      const adminDoc = await withTimeout(getDoc(doc(db, 'admins', user.email)), 5000);
       if (adminDoc.exists()) {
         isAdmin = true;
       }
@@ -51,7 +56,11 @@ onAuthStateChanged(auth, async (user) => {
   } catch (error) {
     console.error("Auth verification failed", error);
     showScreen(loginScreen);
-    loginError.textContent = "Error verifying admin status.";
+    if (error.message === 'FIRESTORE_TIMEOUT') {
+      loginError.innerHTML = "<strong>Firestore Database not found!</strong><br>You MUST create the Firestore Database in the Firebase Console and then download your `serviceAccountKey.json` into the `backend/` folder before continuing.";
+    } else {
+      loginError.textContent = "Error verifying admin status.";
+    }
   }
 });
 

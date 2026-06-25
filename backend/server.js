@@ -283,6 +283,16 @@ app.listen(PORT, async () => {
       });
       console.log(` Ngrok tunnel active at: ${listener.url()}`);
       console.log(` Use this URL as VITE_API_URL in your frontend.`);
+      
+      // Auto-sync the dynamic API URL to Firestore so the Vercel frontend can discover it
+      if (db) {
+        try {
+          await db.collection('settings').doc('global').set({ apiUrl: listener.url() }, { merge: true });
+          console.log(` \x1b[32mSynced API URL to Firestore! Frontend will now auto-connect.\x1b[0m`);
+        } catch (e) {
+          console.error(` \x1b[31mFailed to sync API URL to Firestore. Ensure Firestore Database is created and serviceAccountKey.json is valid.\x1b[0m`);
+        }
+      }
     } catch (err) {
       console.error(` Ngrok tunnel failed to start:`, err);
     }
