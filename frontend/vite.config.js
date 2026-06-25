@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { resolve } from 'path';
 
 export default defineConfig({
   server: {
@@ -6,5 +7,12 @@ export default defineConfig({
   },
   build: {
     outDir: 'dist',
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        chat: resolve(__dirname, 'chat/index.html'),
+        login: resolve(__dirname, 'login/index.html')
+      }
+    }
   }
 });

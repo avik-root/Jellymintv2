@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // If already logged in, redirect to chat
   onAuthStateChanged(auth, (user) => {
     if (user) {
-      window.location.href = '/';
+      window.location.href = '/chat';
     }
   });
 

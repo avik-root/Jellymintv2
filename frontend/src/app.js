@@ -34,7 +34,9 @@ document.addEventListener('DOMContentLoaded', () => {
   onAuthStateChanged(auth, (user) => {
     if (!user) {
       if (unsubscribeUser) unsubscribeUser();
-      window.location.href = '/login.html';
+      if (sessions.length === 0) {
+        startNewSession();
+      }
     } else {
       currentUser = user;
       document.getElementById('bot-name').textContent = user.displayName || 'User';
@@ -236,6 +238,17 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         sessions = [];
         startNewSession();
+      }
+      
+      const pendingPrompt = sessionStorage.getItem('pendingPrompt');
+      if (pendingPrompt) {
+        sessionStorage.removeItem('pendingPrompt');
+        setTimeout(() => {
+          chatInput.value = pendingPrompt;
+          chatInput.style.height = chatInput.scrollHeight + 'px';
+          sendBtn.disabled = false;
+          sendMessage();
+        }, 500);
       }
     } catch (error) {
       console.error('Failed to load history from Firestore:', error);
@@ -477,6 +490,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const model = modelSelect.value;
 
     if (!userPrompt || !model || isGenerating) return;
+
+    if (!currentUser) {
+      sessionStorage.setItem('pendingPrompt', userPrompt);
+      window.location.href = '/login';
+      return;
+    }
 
     // Reset textarea
     chatInput.value = '';
