@@ -182,7 +182,9 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshModelsBtn.querySelector('i').classList.add('fa-spin');
     
     try {
-      const response = await fetch(API_BASE + '/api/models');
+      const response = await fetch(API_BASE + '/api/models', {
+        headers: { 'ngrok-skip-browser-warning': 'true' }
+      });
       const data = await response.json();
       
       refreshModelsBtn.querySelector('i').classList.remove('fa-spin');
@@ -580,7 +582,8 @@ document.addEventListener('DOMContentLoaded', () => {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
+          'Authorization': `Bearer ${idToken}`,
+          'ngrok-skip-browser-warning': 'true'
         },
         body: JSON.stringify({
           model: model,
@@ -659,7 +662,9 @@ document.addEventListener('DOMContentLoaded', () => {
       let metricsHTML = '';
       if (metrics && metrics.eval_count && metrics.eval_duration) {
         try {
-          const sysRes = await fetch(API_BASE + '/api/sysinfo');
+          const sysRes = await fetch(API_BASE + '/api/sysinfo', {
+            headers: { 'ngrok-skip-browser-warning': 'true' }
+          });
           const sysData = await sysRes.json();
           
           const timeSec = (metrics.total_duration / 1e9).toFixed(2);
@@ -739,7 +744,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // Fetch bot info and display in sidebar/header
   async function fetchVersion() {
     try {
-      const response = await fetch(API_BASE + '/api/version');
+      const response = await fetch(API_BASE + '/api/version', {
+        headers: { 'ngrok-skip-browser-warning': 'true' }
+      });
       if (response.ok) {
         const metadata = await response.json();
         document.getElementById('bot-name').textContent = metadata.name || 'Jellymint';
@@ -781,7 +788,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // System Stats Real-time update
   async function fetchSystemStats() {
     try {
-      const response = await fetch(API_BASE + '/api/sysinfo');
+      const response = await fetch(API_BASE + '/api/sysinfo', {
+        headers: { 'ngrok-skip-browser-warning': 'true' }
+      });
       if (response.ok) {
         const sysData = await response.json();
         const headerCpu = document.getElementById('header-cpu');
