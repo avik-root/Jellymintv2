@@ -10,6 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/src/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* Map admin CSS variables to the design system variables from style.css */
     :root {
@@ -67,8 +68,13 @@
     .modal-content { background: var(--bg-secondary); padding: 30px; border-radius: 16px; width: 400px; border: 1px solid var(--border-color); }
     .form-group { margin-bottom: 15px; }
     .form-group label { display: block; margin-bottom: 5px; color: var(--text-muted); }
-    .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); }
-    .btn-primary { background: var(--primary-mint); color: #000; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; width: 100%; margin-top: 10px; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); box-sizing: border-box; }
+    
+    .btn-primary { background: var(--primary-mint); color: #000; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .btn-primary:hover { background: #2dd4bf; transform: translateY(-1px); }
+    
+    .btn-secondary { background: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; transition: 0.2s; }
+    .btn-secondary:hover { background: rgba(255, 255, 255, 0.05); transform: translateY(-1px); }
     
     .view { display: none; }
     .view.active { display: block; }
@@ -80,6 +86,17 @@
     .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
     input:checked + .slider { background-color: var(--primary-mint); }
     input:checked + .slider:before { transform: translateX(22px); }
+
+    /* Status dot */
+    .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+    .status-dot.online { background-color: #10b981; box-shadow: 0 0 8px #10b981; }
+    .status-dot.offline { background-color: #6b7280; }
+
+    /* Charts Grid */
+    .dashboard-charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 30px; }
+    @media (max-width: 992px) {
+      .dashboard-charts-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -148,8 +165,27 @@
             <div class="stat-value" id="stat-users">0</div>
           </div>
           <div class="stat-card">
-            <div class="stat-label">Tokens Consumed (24h)</div>
+            <div class="stat-label">Online Users (Active 15m)</div>
+            <div class="stat-value" id="stat-online">0</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Total Tokens Allocated</div>
             <div class="stat-value" id="stat-tokens">0</div>
+          </div>
+        </div>
+
+        <div class="dashboard-charts-grid">
+          <div class="stat-card" style="display: flex; flex-direction: column;">
+            <div class="stat-label" style="margin-bottom: 15px; font-weight: 600;">Daily Active Users (Last 7 Days)</div>
+            <div style="flex: 1; min-height: 250px; position: relative;">
+              <canvas id="activity-chart"></canvas>
+            </div>
+          </div>
+          <div class="stat-card" style="display: flex; flex-direction: column;">
+            <div class="stat-label" style="margin-bottom: 15px; font-weight: 600;">User Tier Distribution</div>
+            <div style="flex: 1; min-height: 250px; position: relative; display: flex; justify-content: center; align-items: center;">
+              <canvas id="tiers-chart"></canvas>
+            </div>
           </div>
         </div>
       </div>
@@ -182,11 +218,11 @@
       <div id="view-settings" class="view">
         <div class="page-header">
           <div class="page-title">Global Settings</div>
-          <button class="btn-primary" id="save-settings-btn" style="width: auto;">Save Changes</button>
+          <button class="btn-primary" id="save-settings-btn">Save Changes</button>
         </div>
         
         <div class="card" style="max-width: 600px; text-align: left; padding: 30px;">
-          <h3 style="margin-bottom: 20px;">Token Configuration</h3>
+          <h3 style="margin-bottom: 20px;">Global Configuration</h3>
           
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
             <div>
@@ -197,6 +233,22 @@
               <input type="checkbox" id="setting-free-for-all">
               <span class="slider"></span>
             </label>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+            <div>
+              <div style="font-weight: 600;">Enable Ngrok Tunnel</div>
+              <div style="font-size: 0.9rem; color: var(--text-muted);">Allows external connections through Ngrok.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-tunnel-enabled">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label>Ollama Host URL</label>
+            <input type="text" id="setting-ollama-host" placeholder="http://127.0.0.1:11434">
           </div>
 
           <div class="form-group">
@@ -238,8 +290,8 @@
         <input type="number" id="edit-tokens" placeholder="Enter new token balance">
       </div>
       <div style="display: flex; gap: 10px; margin-top: 20px;">
-        <button class="action-btn" id="close-modal-btn" style="flex: 1;">Cancel</button>
-        <button class="btn-primary" id="save-user-btn" style="flex: 1; margin-top: 0;">Save</button>
+        <button class="btn-secondary" id="close-modal-btn" style="flex: 1;">Cancel</button>
+        <button class="btn-primary" id="save-user-btn" style="flex: 1;">Save</button>
       </div>
     </div>
   </div>

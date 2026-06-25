@@ -115,9 +115,12 @@ document.querySelectorAll('.nav-item').forEach(item => {
 });
 
 // --- Dashboard Logic ---
+let activityChartInstance = null;
+let tiersChartInstance = null;
+
 async function initDashboard() {
-  loadSettings();
-  loadUsers();
+  await loadSettings();
+  await loadUsers();
 }
 
 // Settings
@@ -127,6 +130,8 @@ async function loadSettings() {
   if (snap.exists()) {
     const data = snap.data();
     document.getElementById('setting-free-for-all').checked = data.freeForAll || false;
+    document.getElementById('setting-tunnel-enabled').checked = data.tunnelEnabled !== false;
+    document.getElementById('setting-ollama-host').value = data.ollamaHost || 'http://127.0.0.1:11434';
     document.getElementById('setting-tier-free').value = data.limits?.free || 5000;
     document.getElementById('setting-tier-pro').value = data.limits?.pro || 50000;
     document.getElementById('setting-tier-advanced').value = data.limits?.advanced || 1000000;
@@ -139,10 +144,12 @@ document.getElementById('save-settings-btn').addEventListener('click', async () 
   
   const settings = {
     freeForAll: document.getElementById('setting-free-for-all').checked,
+    tunnelEnabled: document.getElementById('setting-tunnel-enabled').checked,
+    ollamaHost: document.getElementById('setting-ollama-host').value.trim() || 'http://127.0.0.1:11434',
     limits: {
-      free: parseInt(document.getElementById('setting-tier-free').value),
-      pro: parseInt(document.getElementById('setting-tier-pro').value),
-      advanced: parseInt(document.getElementById('setting-tier-advanced').value)
+      free: parseInt(document.getElementById('setting-tier-free').value) || 5000,
+      pro: parseInt(document.getElementById('setting-tier-pro').value) || 50000,
+      advanced: parseInt(document.getElementById('setting-tier-advanced').value) || 1000000
     }
   };
 
@@ -162,7 +169,10 @@ async function loadUsers() {
   tbody.innerHTML = '';
   
   let totalTokens = 0;
+  let onlineCount = 0;
   currentUsers = [];
+  
+  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
 
   snap.forEach(docSnap => {
     const data = docSnap.data();
@@ -172,11 +182,26 @@ async function loadUsers() {
     const tokens = data.tokens || 0;
     totalTokens += tokens;
 
+    // Check if online (active within last 15 minutes)
+    let isOnline = false;
+    if (data.lastActive) {
+      const activeDate = data.lastActive.toDate ? data.lastActive.toDate() : new Date(data.lastActive);
+      if (activeDate >= fifteenMinutesAgo) {
+        isOnline = true;
+        onlineCount++;
+      }
+    }
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td>
-        <div style="font-weight: 600;">${data.name || 'Unknown'}</div>
-        <div style="font-size: 0.8rem; color: var(--text-muted);">${data.email || 'No email'}</div>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="status-dot ${isOnline ? 'online' : 'offline'}" title="${isOnline ? 'Online' : 'Offline'}"></span>
+          <div>
+            <div style="font-weight: 600;">${data.name || 'Unknown'}</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${data.email || 'No email'}</div>
+          </div>
+        </div>
       </td>
       <td>
         <div>${data.ip || 'Unknown IP'}</div>
@@ -188,7 +213,7 @@ async function loadUsers() {
         ${tokens.toLocaleString()}
       </td>
       <td>
-        ${data.lastActive ? new Date(data.lastActive.toDate()).toLocaleDateString() : 'Never'}
+        ${data.lastActive ? (data.lastActive.toDate ? data.lastActive.toDate() : new Date(data.lastActive)).toLocaleString() : 'Never'}
       </td>
       <td>
         <button class="action-btn edit-user" data-uid="${uid}">Edit</button>
@@ -198,8 +223,8 @@ async function loadUsers() {
   });
 
   document.getElementById('stat-users').textContent = currentUsers.length;
-  // Tokens consumed would require tracking spent tokens, for now we just show current total held.
-  document.getElementById('stat-tokens').textContent = 'N/A';
+  document.getElementById('stat-online').textContent = onlineCount;
+  document.getElementById('stat-tokens').textContent = totalTokens.toLocaleString();
 
   // Attach edit handlers
   document.querySelectorAll('.edit-user').forEach(btn => {
@@ -207,6 +232,143 @@ async function loadUsers() {
       const uid = e.target.dataset.uid;
       openEditModal(uid);
     });
+  });
+
+  // Render Charts
+  updateCharts(currentUsers);
+}
+
+function updateCharts(users) {
+  updateTiersChart(users);
+  updateActivityChart(users);
+}
+
+function updateTiersChart(users) {
+  const tiers = { free: 0, pro: 0, advanced: 0 };
+  users.forEach(u => {
+    const tier = (u.tier || 'free').toLowerCase();
+    if (tiers[tier] !== undefined) {
+      tiers[tier]++;
+    } else {
+      tiers.free++;
+    }
+  });
+
+  const canvas = document.getElementById('tiers-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (tiersChartInstance) {
+    tiersChartInstance.destroy();
+  }
+
+  tiersChartInstance = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels: ['Free', 'PRO', 'Advanced'],
+      datasets: [{
+        data: [tiers.free, tiers.pro, tiers.advanced],
+        backgroundColor: [
+          'rgba(255, 255, 255, 0.15)',
+          'rgba(59, 130, 246, 0.4)',
+          'rgba(20, 184, 166, 0.4)'
+        ],
+        borderColor: [
+          'rgba(255, 255, 255, 0.3)',
+          'rgba(59, 130, 246, 0.8)',
+          'rgba(20, 184, 166, 0.8)'
+        ],
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#94a3b8',
+            font: { family: 'Outfit', size: 11 }
+          }
+        }
+      }
+    }
+  });
+}
+
+function updateActivityChart(users) {
+  const dates = [];
+  const counts = [];
+  
+  // Create last 7 days labels and count active users
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    dates.push(d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }));
+    
+    const startOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0, 0);
+    const endOfDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+    
+    let activeCount = 0;
+    users.forEach(u => {
+      if (u.lastActive) {
+        const activeDate = u.lastActive.toDate ? u.lastActive.toDate() : new Date(u.lastActive);
+        if (activeDate >= startOfDay && activeDate <= endOfDay) {
+          activeCount++;
+        }
+      }
+    });
+    counts.push(activeCount);
+  }
+
+  const canvas = document.getElementById('activity-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (activityChartInstance) {
+    activityChartInstance.destroy();
+  }
+
+  activityChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [{
+        label: 'Active Users',
+        data: counts,
+        borderColor: '#14b8a6',
+        backgroundColor: 'rgba(20, 184, 166, 0.1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: {
+            color: '#94a3b8',
+            font: { family: 'Outfit' },
+            stepSize: 1,
+            precision: 0
+          }
+        },
+        x: {
+          grid: { display: false },
+          ticks: {
+            color: '#94a3b8',
+            font: { family: 'Outfit' }
+          }
+        }
+      }
+    }
   });
 }
 
