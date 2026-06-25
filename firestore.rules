@@ -1,0 +1,31 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if the current user is an admin
+    function isAdmin() {
+      return request.auth != null && 
+        (request.auth.token.email.lower() == 'aviksamantaofficial@gmail.com' || 
+         exists(/databases/$(database)/documents/admins/$(request.auth.token.email.lower())));
+    }
+
+    // Admins Collection: holds administrator accounts
+    match /admins/{email} {
+      allow read: if request.auth != null && (request.auth.token.email.lower() == email.lower() || isAdmin());
+      allow write: if request.auth != null && (email.lower() == 'aviksamantaofficial@gmail.com' || isAdmin());
+    }
+
+    // Users Collection: holds token balances, tiers, and user activity
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow write: if request.auth != null && isAdmin();
+    }
+
+    // Settings Collection: global limits and configuration
+    match /settings/{settingId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && isAdmin();
+    }
+  }
+}
