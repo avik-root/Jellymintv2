@@ -9,3 +9,9 @@ backend/*-firebase-adminsdk-*.json
 .env.production
 .env.development
 
+# Dependencies & Build Output
+node_modules/
+dist/
+dist-ssr/
+
+
