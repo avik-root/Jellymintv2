@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (signOutBtn) {
     signOutBtn.addEventListener('click', async () => {
       if (!currentUser) {
-        window.location.href = '/login';
+        window.location.href = '/login/';
         return;
       }
       try {

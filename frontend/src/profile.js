@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) {
-      window.location.href = '/login';
+      window.location.href = '/login/';
       return;
     }
 
@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       if (unsubscribeUser) unsubscribeUser();
       await signOut(auth);
-      window.location.href = '/login';
+      window.location.href = '/login/';
     } catch (error) {
       console.error('Error signing out:', error);
     }
@@ -92,6 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Back to chat
   backToChatBtn.addEventListener('click', () => {
-    window.location.href = '/chat';
+    window.location.href = '/chat/';
   });
 });

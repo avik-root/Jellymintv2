@@ -20,9 +20,9 @@
     import { auth, onAuthStateChanged } from './src/firebase.js';
     onAuthStateChanged(auth, (user) => {
       if (user) {
-        window.location.replace('/chat');
+        window.location.replace('/chat/');
       } else {
-        window.location.replace('/login');
+        window.location.replace('/login/');
       }
     });
   </script>
