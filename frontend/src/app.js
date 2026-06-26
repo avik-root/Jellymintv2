@@ -372,11 +372,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (docSnap.exists()) {
         sessions = docSnap.data().sessions || [];
         renderSidebarHistory();
-        if (sessions.length > 0) {
-          loadSession(sessions[0].id);
-        } else {
-          startNewSession();
-        }
+        startNewSession();
       } else {
         sessions = [];
         startNewSession();
