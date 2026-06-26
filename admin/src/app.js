@@ -179,6 +179,7 @@ document.querySelectorAll('.nav-item').forEach(item => {
       if (cpuChartInstance) cpuChartInstance.resize();
       if (ramChartInstance) ramChartInstance.resize();
       if (gpuChartInstance) gpuChartInstance.resize();
+      if (cpuTempChartInstance) cpuTempChartInstance.resize();
     }
   });
 });
@@ -212,6 +213,7 @@ let tiersChartInstance = null;
 let cpuChartInstance = null;
 let ramChartInstance = null;
 let gpuChartInstance = null;
+let cpuTempChartInstance = null;
 let tokenUsageChartInstance = null;
 let apiBaseUrl = '';
 
@@ -221,8 +223,9 @@ const sysLabels = Array(maxDataPoints).fill('');
 const cpuData = Array(maxDataPoints).fill(0);
 const ramData = Array(maxDataPoints).fill(0);
 const gpuData = Array(maxDataPoints).fill(0);
+const cpuTempData = Array(maxDataPoints).fill(0);
 
-function createSparkline(canvasId, label, data, color) {
+function createSparkline(canvasId, label, data, color, unit = '%') {
   const canvas = document.getElementById(canvasId);
   if (!canvas) return null;
   const ctx = canvas.getContext('2d');
@@ -252,7 +255,7 @@ function createSparkline(canvasId, label, data, color) {
           mode: 'index',
           intersect: false,
           callbacks: {
-            label: (context) => ` ${context.dataset.label}: ${context.raw}%`
+            label: (context) => ` ${context.dataset.label}: ${context.raw}${unit}`
           }
         }
       },
@@ -264,7 +267,7 @@ function createSparkline(canvasId, label, data, color) {
           ticks: {
             color: '#64748b',
             font: { family: 'Outfit', size: 9 },
-            callback: value => value + '%'
+            callback: value => value + unit
           }
         },
         x: {
@@ -280,6 +283,7 @@ function initSysinfoCharts() {
   cpuChartInstance = createSparkline('cpu-chart', 'CPU Usage', cpuData, 'rgba(16, 185, 129, 1)');
   ramChartInstance = createSparkline('ram-chart', 'RAM Usage', ramData, 'rgba(6, 182, 212, 1)');
   gpuChartInstance = createSparkline('gpu-chart', 'GPU Usage', gpuData, 'rgba(139, 92, 246, 1)');
+  cpuTempChartInstance = createSparkline('cpu-temp-chart', 'CPU Temp', cpuTempData, 'rgba(249, 115, 22, 1)', '°C');
 }
 
 async function updateTokenUsageChart() {
@@ -392,6 +396,9 @@ async function fetchSystemStats() {
       
       const gpuStatEl = document.getElementById('stat-gpu');
       if (gpuStatEl) gpuStatEl.textContent = `${data.gpu}%`;
+
+      const cpuTempStatEl = document.getElementById('stat-cpu-temp');
+      if (cpuTempStatEl) cpuTempStatEl.textContent = `${data.cpuTemp || 0}°C`;
       
       // Update datasets
       cpuData.push(data.cpu || 0);
@@ -400,10 +407,13 @@ async function fetchSystemStats() {
       ramData.shift();
       gpuData.push(data.gpu || 0);
       gpuData.shift();
+      cpuTempData.push(data.cpuTemp || 0);
+      cpuTempData.shift();
       
       if (cpuChartInstance) cpuChartInstance.update('none');
       if (ramChartInstance) ramChartInstance.update('none');
       if (gpuChartInstance) gpuChartInstance.update('none');
+      if (cpuTempChartInstance) cpuTempChartInstance.update('none');
     }
   } catch (e) {
     // Suppress warning
