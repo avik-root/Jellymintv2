@@ -38,6 +38,8 @@ body {
   background-color: var(--bg-main);
   color: var(--text-primary);
   height: 100vh;
+  height: 100svh;
+  height: 100dvh;
   overflow: hidden;
   display: flex;
 }
@@ -66,6 +68,8 @@ body {
   display: flex;
   width: 100%;
   height: 100vh;
+  height: 100svh;
+  height: 100dvh;
   position: relative;
 }
 
@@ -318,6 +322,7 @@ body {
   overflow: hidden;
   background-color: var(--bg-main);
   position: relative;
+  min-width: 0;
 }
 
 /* Header Styling */
@@ -400,15 +405,7 @@ body.sidebar-closed .menu-btn {
 }
 
 .system-stats {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-color);
-  border-radius: 50px;
-  padding: 4px 12px;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
+  display: none !important;
 }
 
 .system-stats span {
@@ -508,6 +505,7 @@ body.sidebar-closed .menu-btn {
   display: flex;
   flex-direction: column;
   position: relative;
+  min-height: 0;
 }
 
 /* Welcome Screen */
@@ -673,6 +671,7 @@ body.sidebar-closed .menu-btn {
   max-width: calc(100% - 48px);
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .message-wrapper.user .message-bubble {
@@ -695,6 +694,7 @@ body.sidebar-closed .menu-btn {
   color: var(--text-primary);
   font-weight: 400;
   word-break: break-word;
+  min-width: 0;
 }
 
 /* Markdown styling inside bot bubble */
@@ -1159,5 +1159,10 @@ body.sidebar-closed .menu-btn {
   }
   .message-bubble {
     max-width: 100%;
+  }
+
+  .suggestions-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
   }
 }

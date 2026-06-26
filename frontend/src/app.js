@@ -82,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
       
       if (apiUrlChanged || isInitialLoad) {
         fetchModels();
-        fetchSystemStats();
         isInitialLoad = false;
       }
     }
@@ -287,9 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText.textContent = 'AI Service Connected';
         ollamaErrorBanner.classList.add('hidden');
         
-        // Show system stats and model select wrapper in header
-        const systemStatsEl = document.getElementById('header-system-stats');
-        if (systemStatsEl) systemStatsEl.style.display = 'flex';
+        // Show model select wrapper in header
         const modelSelectWrapper = document.querySelector('.model-selector-wrapper');
         if (modelSelectWrapper) modelSelectWrapper.style.display = 'flex';
         
@@ -341,9 +338,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentModelSpan.textContent = 'None';
         ollamaErrorBanner.classList.remove('hidden');
         
-        // Hide system stats and model select wrapper in header
-        const systemStatsEl = document.getElementById('header-system-stats');
-        if (systemStatsEl) systemStatsEl.style.display = 'none';
+        // Hide model select wrapper in header
         const modelSelectWrapper = document.querySelector('.model-selector-wrapper');
         if (modelSelectWrapper) modelSelectWrapper.style.display = 'none';
       }
@@ -897,27 +892,7 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(typeWriter, 300);
   }
 
-  // System Stats Real-time update
-  async function fetchSystemStats() {
-    try {
-      const response = await fetch(API_BASE + '/api/sysinfo', {
-        headers: { 'ngrok-skip-browser-warning': 'true' }
-      });
-      if (response.ok) {
-        const sysData = await response.json();
-        const headerCpu = document.getElementById('header-cpu');
-        const headerRam = document.getElementById('header-ram');
-        if (headerCpu) headerCpu.innerHTML = `<i class="fa-solid fa-microchip"></i> ${sysData.cpu}%`;
-        if (headerRam) headerRam.innerHTML = `<i class="fa-solid fa-memory"></i> ${sysData.ram}%`;
-      }
-    } catch (e) {
-      // suppress warning
-    }
-  }
-  
   // Initialize
   fetchVersion();
-  fetchSystemStats();
-  setInterval(fetchSystemStats, 2000);
 });
 
