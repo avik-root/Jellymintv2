@@ -466,6 +466,30 @@ document.getElementById('save-settings-btn').addEventListener('click', async () 
   setTimeout(() => btn.textContent = 'Save Changes', 2000);
 });
 
+// Auto-save settings toggles immediately on click/change
+const togglesToAutoSave = [
+  { id: 'setting-free-for-all', key: 'freeForAll' },
+  { id: 'setting-tunnel-enabled', key: 'tunnelEnabled' },
+  { id: 'setting-maintenance-mode', key: 'maintenanceMode' },
+  { id: 'setting-coming-soon-mode', key: 'comingSoonMode' }
+];
+
+togglesToAutoSave.forEach(t => {
+  const el = document.getElementById(t.id);
+  if (el) {
+    el.addEventListener('change', async () => {
+      try {
+        await setDoc(doc(db, 'settings', 'global'), {
+          [t.key]: el.checked
+        }, { merge: true });
+        console.log(`[Jellymint] Settings auto-saved: ${t.key} = ${el.checked}`);
+      } catch (err) {
+        console.error(`[Jellymint] Error auto-saving settings for ${t.key}:`, err);
+      }
+    });
+  }
+});
+
 // Users
 let currentUsers = [];
 
