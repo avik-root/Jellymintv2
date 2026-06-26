@@ -651,23 +651,158 @@
 
     /* Responsive adjustments */
     @media (max-width: 900px) {
+      body {
+        min-height: 100vh;
+        min-height: 100svh;
+        min-height: 100dvh;
+      }
       .portal-container {
         flex-direction: column;
+        min-height: 100vh;
+        min-height: 100svh;
+        min-height: 100dvh;
       }
       .portal-sidebar {
         width: 100%;
         border-right: none;
         border-bottom: 1px solid var(--border-light);
-        padding: 20px;
+        padding: 16px;
+        background: var(--bg-sidebar);
+        display: grid;
+        grid-template-columns: 1fr auto;
+        grid-template-rows: auto auto auto;
+        gap: 12px;
+        align-items: center;
+      }
+      .sidebar-header {
+        grid-column: 1;
+        grid-row: 1;
+        margin-bottom: 0;
+        padding-bottom: 0;
+        border-bottom: none;
+        gap: 8px;
+      }
+      .sidebar-logo {
+        width: 28px;
+        height: 28px;
+      }
+      .sidebar-brand {
+        font-size: 1.05rem;
       }
       .sidebar-user {
-        display: none;
+        grid-column: 1 / span 2;
+        grid-row: 2;
+        display: flex !important;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.015);
+        border: 1px solid var(--border-light);
+        border-radius: 12px;
+        margin-bottom: 0;
+        text-align: left;
+      }
+      .profile-avatar {
+        width: 42px;
+        height: 42px;
+        margin: 0;
+        border-width: 1.5px;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.1);
+      }
+      .profile-avatar .avatar-fallback {
+        font-size: 1.3rem;
+      }
+      .profile-name {
+        font-size: 0.95rem;
+        margin-bottom: 2px;
+      }
+      .profile-email {
+        font-size: 0.78rem;
+      }
+      .sidebar-nav {
+        grid-column: 1 / span 2;
+        grid-row: 3;
+        flex-direction: row;
+        gap: 4px;
+        width: 100%;
+        border-bottom: none;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        margin-top: 4px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .nav-item {
+        flex: 1 0 auto;
+        text-align: center;
+        justify-content: center;
+        padding: 8px 12px;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        white-space: nowrap;
+      }
+      .sidebar-footer {
+        grid-column: 2;
+        grid-row: 1;
+        margin-top: 0;
+        flex-direction: row;
+        gap: 6px;
+        justify-self: end;
+      }
+      .sidebar-btn {
+        width: auto;
+        padding: 6px 12px;
+        font-size: 0.8rem;
+        border-radius: 8px;
+        margin: 0;
+        font-weight: 500;
+        white-space: nowrap;
       }
       .portal-content {
-        padding: 20px;
+        padding: 20px 16px;
+        flex-grow: 1;
+      }
+      .overview-stats {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-bottom: 16px;
+      }
+      .stat-mini-card {
+        padding: 10px 4px;
+        border-radius: 12px;
+      }
+      .stat-mini-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-top: 2px;
+      }
+      .stat-mini-label {
+        font-size: 0.68rem;
+        letter-spacing: 0.2px;
+      }
+      .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+      .dashboard-card {
+        padding: 20px 16px;
+        border-radius: 16px;
       }
       .plans-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .plan-card {
+        padding: 24px 18px;
+        border-radius: 16px;
+      }
+      .input-btn-group {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .input-btn-group .btn-action {
+        width: 100%;
+        justify-content: center;
       }
     }
   </style>
