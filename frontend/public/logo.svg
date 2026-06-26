@@ -28,8 +28,8 @@
     </linearGradient>
   </defs>
 
-  <!-- Glowing Aura -->
-  <circle cx="50%" cy="50%" r="45%" fill="url(#glow)"/>
+  <!-- Glowing Aura (Removed to make the logo fully transparent) -->
+  <!-- <circle cx="50%" cy="50%" r="45%" fill="url(#glow)"/> -->
 
   <!-- Leaf Shape 1 (Back Layer - Mint) -->
   <path d="M50 15 C68 25, 78 45, 68 65 C58 85, 42 85, 32 65 C22 45, 32 25, 50 15 Z" 
