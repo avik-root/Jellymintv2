@@ -256,9 +256,12 @@ app.post('/api/chat', verifyToken, async (req, res) => {
         for (const line of completeLines) {
           if (!line.trim()) continue;
           try {
-            const parsed = JSON.parse(line);
+            const parsed = JSON.parse(line.trim());
             if (parsed.eval_count) {
               eval_count += parsed.eval_count;
+            }
+            if (parsed.prompt_eval_count) {
+              eval_count += parsed.prompt_eval_count;
             }
           } catch(e) { }
         }
@@ -268,9 +271,12 @@ app.post('/api/chat', verifyToken, async (req, res) => {
     // Process any remaining buffer
     if (buffer.trim()) {
       try {
-        const parsed = JSON.parse(buffer);
+        const parsed = JSON.parse(buffer.trim());
         if (parsed.eval_count) {
           eval_count += parsed.eval_count;
+        }
+        if (parsed.prompt_eval_count) {
+          eval_count += parsed.prompt_eval_count;
         }
       } catch(e) { }
     }
@@ -279,9 +285,12 @@ app.post('/api/chat', verifyToken, async (req, res) => {
 
     // 4. Deduct tokens
     if (!settings.freeForAll && eval_count > 0) {
+      console.log(`[Tokens] Deducting ${eval_count} tokens from user ${uid} (${req.user.email || 'No email'})`);
       await userRef.update({
         tokens: FieldValue.increment(-eval_count)
       });
+    } else if (settings.freeForAll) {
+      console.log(`[Tokens] Free-for-all mode active, skipping deduction of ${eval_count} tokens for user ${uid}.`);
     }
 
   } catch (error) {

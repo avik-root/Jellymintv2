@@ -39,11 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
       new Promise((_, reject) => setTimeout(() => reject(new Error('FIRESTORE_TIMEOUT')), ms))
     ]);
 
-    // Auto-discover the backend ngrok API URL from Firestore
+    // Auto-discover the backend ngrok API URL and default model from Firestore
     try {
       const dbSnap = await withTimeout(getDoc(doc(db, 'settings', 'global')), 5000);
-      if (dbSnap.exists() && dbSnap.data().apiUrl) {
-        API_BASE = dbSnap.data().apiUrl;
+      if (dbSnap.exists()) {
+        const data = dbSnap.data();
+        if (data.apiUrl) API_BASE = data.apiUrl;
+        if (data.defaultModel) {
+          window.defaultModelFromSettings = data.defaultModel;
+        }
       }
     } catch (e) {
       console.warn("Could not fetch dynamic API URL from Firestore", e);
@@ -219,18 +223,22 @@ document.addEventListener('DOMContentLoaded', () => {
         // Automatically select the best fitting model
         let selectedModel = '';
         
-        const qwen3Model = activeModels.find(m => m.name.toLowerCase().includes('qwen3'));
-        const qwen25Model = activeModels.find(m => m.name.toLowerCase().includes('qwen2.5'));
-        const qwenModel = activeModels.find(m => m.name.toLowerCase().includes('qwen'));
-        
-        if (qwen3Model) {
-          selectedModel = qwen3Model.name;
-        } else if (qwen25Model) {
-          selectedModel = qwen25Model.name;
-        } else if (qwenModel) {
-          selectedModel = qwenModel.name;
+        if (window.defaultModelFromSettings && activeModels.some(m => m.name === window.defaultModelFromSettings)) {
+          selectedModel = window.defaultModelFromSettings;
         } else {
-          selectedModel = activeModels[0].name;
+          const qwen3Model = activeModels.find(m => m.name.toLowerCase().includes('qwen3'));
+          const qwen25Model = activeModels.find(m => m.name.toLowerCase().includes('qwen2.5'));
+          const qwenModel = activeModels.find(m => m.name.toLowerCase().includes('qwen'));
+          
+          if (qwen3Model) {
+            selectedModel = qwen3Model.name;
+          } else if (qwen25Model) {
+            selectedModel = qwen25Model.name;
+          } else if (qwenModel) {
+            selectedModel = qwenModel.name;
+          } else {
+            selectedModel = activeModels[0].name;
+          }
         }
 
         modelSelect.value = selectedModel;
@@ -510,7 +518,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function scrollToBottom() {
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    const container = messagesContainer.parentElement || messagesContainer;
+    requestAnimationFrame(() => {
+      container.scrollTop = container.scrollHeight;
+    });
   }
 
   // Suggestion Cards Clicking

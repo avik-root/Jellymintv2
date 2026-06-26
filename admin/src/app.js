@@ -40,7 +40,7 @@ onAuthStateChanged(auth, async (user) => {
       isAdmin = true;
       // Auto-add super admin to DB with timeout — non-blocking
       try {
-        await withTimeout(setDoc(doc(db, 'admins', user.email), {
+        await withTimeout(setDoc(doc(db, 'admins', userEmail), {
           addedAt: new Date(),
           role: 'superadmin'
         }, { merge: true }), 5000);
@@ -50,7 +50,7 @@ onAuthStateChanged(auth, async (user) => {
       }
     } else {
       try {
-        const adminDoc = await withTimeout(getDoc(doc(db, 'admins', user.email)), 5000);
+        const adminDoc = await withTimeout(getDoc(doc(db, 'admins', userEmail)), 5000);
         if (adminDoc.exists()) {
           isAdmin = true;
         }
@@ -117,11 +117,97 @@ document.querySelectorAll('.nav-item').forEach(item => {
 // --- Dashboard Logic ---
 let activityChartInstance = null;
 let tiersChartInstance = null;
+let sysinfoChartInstance = null;
 let apiBaseUrl = '';
+
+// Live system info datasets
+const maxDataPoints = 15;
+const sysLabels = Array(maxDataPoints).fill('');
+const cpuData = Array(maxDataPoints).fill(0);
+const ramData = Array(maxDataPoints).fill(0);
+const gpuData = Array(maxDataPoints).fill(0);
+
+function initSysinfoChart() {
+  const canvas = document.getElementById('sysinfo-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  sysinfoChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: sysLabels,
+      datasets: [
+        {
+          label: 'CPU Usage (%)',
+          data: cpuData,
+          borderColor: '#10b981',
+          backgroundColor: 'rgba(16, 185, 129, 0.05)',
+          borderWidth: 2,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'RAM Usage (%)',
+          data: ramData,
+          borderColor: '#06b6d4',
+          backgroundColor: 'rgba(6, 182, 212, 0.05)',
+          borderWidth: 2,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          fill: true,
+          tension: 0.3
+        },
+        {
+          label: 'GPU Usage (%)',
+          data: gpuData,
+          borderColor: '#8b5cf6',
+          backgroundColor: 'rgba(139, 92, 246, 0.05)',
+          borderWidth: 2,
+          pointRadius: 2,
+          pointHoverRadius: 5,
+          fill: true,
+          tension: 0.3
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            color: '#94a3b8',
+            font: { family: 'Outfit', size: 11 }
+          }
+        }
+      },
+      scales: {
+        y: {
+          min: 0,
+          max: 100,
+          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          ticks: {
+            color: '#94a3b8',
+            font: { family: 'Outfit' },
+            callback: value => value + '%'
+          }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { display: false }
+        }
+      }
+    }
+  });
+}
 
 async function initDashboard() {
   await loadSettings();
   await loadUsers();
+  initSysinfoChart();
   
   if (apiBaseUrl) {
     fetchSystemStats();
@@ -141,6 +227,18 @@ async function fetchSystemStats() {
       const data = await res.json();
       document.getElementById('stat-cpu').textContent = `${data.cpu}%`;
       document.getElementById('stat-ram').textContent = `${data.ram}%`;
+      
+      // Update datasets
+      cpuData.push(data.cpu || 0);
+      cpuData.shift();
+      ramData.push(data.ram || 0);
+      ramData.shift();
+      gpuData.push(data.gpu || 0);
+      gpuData.shift();
+      
+      if (sysinfoChartInstance) {
+        sysinfoChartInstance.update('none'); // Update without animation for rendering performance
+      }
     }
   } catch (e) {
     // Suppress warning
@@ -167,15 +265,45 @@ async function fetchActiveModel() {
 async function loadSettings() {
   const settingsRef = doc(db, 'settings', 'global');
   const snap = await getDoc(settingsRef);
+  let defaultModelVal = '';
+  
   if (snap.exists()) {
     const data = snap.data();
     apiBaseUrl = data.apiUrl || '';
+    defaultModelVal = data.defaultModel || '';
     document.getElementById('setting-free-for-all').checked = data.freeForAll || false;
     document.getElementById('setting-tunnel-enabled').checked = data.tunnelEnabled !== false;
     document.getElementById('setting-ollama-host').value = data.ollamaHost || 'http://127.0.0.1:11434';
     document.getElementById('setting-tier-free').value = data.limits?.free || 5000;
     document.getElementById('setting-tier-pro').value = data.limits?.pro || 50000;
     document.getElementById('setting-tier-advanced').value = data.limits?.advanced || 1000000;
+  }
+
+  // Populate dynamic model dropdown
+  if (apiBaseUrl) {
+    try {
+      const res = await fetch(apiBaseUrl + '/api/models', {
+        headers: { 'ngrok-skip-browser-warning': 'true' }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const select = document.getElementById('setting-default-model');
+        if (select) {
+          select.innerHTML = '<option value="">(Automatic / qwen)</option>';
+          if (data.models && data.models.length > 0) {
+            data.models.forEach(m => {
+              const opt = document.createElement('option');
+              opt.value = m.name;
+              opt.textContent = m.name;
+              select.appendChild(opt);
+            });
+          }
+          select.value = defaultModelVal;
+        }
+      }
+    } catch (e) {
+      console.warn("Could not fetch models for settings:", e);
+    }
   }
 }
 
@@ -187,6 +315,7 @@ document.getElementById('save-settings-btn').addEventListener('click', async () 
     freeForAll: document.getElementById('setting-free-for-all').checked,
     tunnelEnabled: document.getElementById('setting-tunnel-enabled').checked,
     ollamaHost: document.getElementById('setting-ollama-host').value.trim() || 'http://127.0.0.1:11434',
+    defaultModel: document.getElementById('setting-default-model').value || '',
     limits: {
       free: parseInt(document.getElementById('setting-tier-free').value) || 5000,
       pro: parseInt(document.getElementById('setting-tier-pro').value) || 50000,
