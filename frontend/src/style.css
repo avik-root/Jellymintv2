@@ -659,15 +659,15 @@ body.sidebar-closed .menu-btn {
 
 .message-avatar.bot-avatar,
 .message-avatar.assistant-avatar {
-  background: linear-gradient(135deg, var(--primary-mint), var(--accent-cyan));
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   transition: all 0.3s ease;
 }
 
 .message-avatar.bot-avatar img,
 .message-avatar.assistant-avatar img {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   transition: all 0.3s ease;
 }
 

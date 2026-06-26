@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let unsubscribeUser = null;
   let unsubscribeSettings = null;
+  let isUserAdmin = false;
 
   let isCheckingLockdowns = false;
   async function checkLockdownStates(user, settingsData) {
@@ -238,7 +239,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let freeForAll = false;
     let userData = null;
     let apiUrl = 'https://spousal-scrabble-stamina.ngrok-free.dev';
-    let isUserAdmin = false;
 
     function updateUserUI() {
       if (!userData) return;
