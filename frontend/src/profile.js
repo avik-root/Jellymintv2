@@ -70,8 +70,12 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // 2. Coming Soon Redirect (No Admin Exemption)
-      if (settingsData && settingsData.comingSoonMode === true) {
+      // 2. Coming Soon Redirect (No Admin Exemption on user domain, but exempt admin domain/port)
+      const host = window.location.hostname.toLowerCase();
+      const port = window.location.port;
+      const isAdminDomain = host.includes('admin') || port === '5174';
+
+      if (!isAdminDomain && settingsData && settingsData.comingSoonMode === true) {
         window.location.href = '/coming-soon/';
         isCheckingLockdowns = false;
         return;

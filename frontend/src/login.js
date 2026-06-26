@@ -21,7 +21,11 @@ document.addEventListener('DOMContentLoaded', () => {
   onSnapshot(doc(db, 'settings', 'global'), (snap) => {
     if (snap.exists()) {
       const data = snap.data();
-      isComingSoon = (data.comingSoonMode === true);
+      const host = window.location.hostname.toLowerCase();
+      const port = window.location.port;
+      const isAdminDomain = host.includes('admin') || port === '5174';
+      
+      isComingSoon = (data.comingSoonMode === true && !isAdminDomain);
       if (isComingSoon) {
         window.location.href = '/coming-soon/';
       }
