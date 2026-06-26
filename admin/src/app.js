@@ -1,4 +1,4 @@
-import { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, collection, doc, setDoc, getDoc, getDocs, updateDoc, query, orderBy, limit } from './firebase.js';
+import { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, collection, doc, setDoc, getDoc, getDocs, updateDoc, deleteDoc, query, orderBy, limit } from './firebase.js';
 import { Renderer, Triangle, Program, Mesh } from 'ogl';
 
 // DOM Elements
@@ -16,6 +16,28 @@ const loginError = document.getElementById('login-error');
 // Auth Flow
 const SUPER_ADMIN = import.meta.env.VITE_ADMIN_EMAIL;
 let cleanupPrism = null;
+
+// User Search listener
+document.addEventListener('DOMContentLoaded', () => {
+  const searchInput = document.getElementById('user-search-input');
+  const searchBtn = document.getElementById('user-search-btn');
+  if (searchInput && searchBtn) {
+    const performSearch = () => {
+      const queryStr = (searchInput.value || '').trim().toLowerCase();
+      if (!queryStr) {
+        renderUsersTable(currentUsers);
+        return;
+      }
+      const filtered = currentUsers.filter(u => 
+        (u.name || '').toLowerCase().includes(queryStr) || 
+        (u.email || '').toLowerCase().includes(queryStr)
+      );
+      renderUsersTable(filtered);
+    };
+    searchBtn.addEventListener('click', performSearch);
+    searchInput.addEventListener('input', performSearch);
+  }
+});
 
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -385,6 +407,8 @@ async function loadSettings() {
     defaultModelVal = data.defaultModel || '';
     document.getElementById('setting-free-for-all').checked = data.freeForAll || false;
     document.getElementById('setting-tunnel-enabled').checked = data.tunnelEnabled !== false;
+    document.getElementById('setting-maintenance-mode').checked = data.maintenanceMode || false;
+    document.getElementById('setting-coming-soon-mode').checked = data.comingSoonMode || false;
     document.getElementById('setting-ollama-host').value = data.ollamaHost || 'http://127.0.0.1:11434';
     document.getElementById('setting-tier-free').value = data.limits?.free || 5000;
     document.getElementById('setting-tier-pro').value = data.limits?.pro || 50000;
@@ -426,6 +450,8 @@ document.getElementById('save-settings-btn').addEventListener('click', async () 
   const settings = {
     freeForAll: document.getElementById('setting-free-for-all').checked,
     tunnelEnabled: document.getElementById('setting-tunnel-enabled').checked,
+    maintenanceMode: document.getElementById('setting-maintenance-mode').checked,
+    comingSoonMode: document.getElementById('setting-coming-soon-mode').checked,
     ollamaHost: document.getElementById('setting-ollama-host').value.trim() || 'http://127.0.0.1:11434',
     defaultModel: document.getElementById('setting-default-model').value || '',
     limits: {
@@ -447,9 +473,6 @@ async function loadUsers() {
   const usersRef = collection(db, 'users');
   const snap = await getDocs(usersRef);
   
-  const tbody = document.getElementById('users-table-body');
-  tbody.innerHTML = '';
-  
   let totalTokens = 0;
   let onlineCount = 0;
   currentUsers = [];
@@ -461,16 +484,44 @@ async function loadUsers() {
     const uid = docSnap.id;
     currentUsers.push({ uid, ...data });
     
-    const tokens = data.tokens || 0;
-    totalTokens += tokens;
+    totalTokens += data.tokens || 0;
 
     // Check if online (active within last 15 minutes)
-    let isOnline = false;
     if (data.lastActive) {
       const activeDate = data.lastActive.toDate ? data.lastActive.toDate() : new Date(data.lastActive);
       if (activeDate >= fifteenMinutesAgo) {
-        isOnline = true;
         onlineCount++;
+      }
+    }
+  });
+
+  document.getElementById('stat-users').textContent = currentUsers.length;
+  document.getElementById('stat-online').textContent = onlineCount;
+  document.getElementById('stat-tokens').textContent = totalTokens.toLocaleString();
+
+  // Draw users table
+  renderUsersTable(currentUsers);
+
+  // Render Charts
+  updateCharts(currentUsers);
+}
+
+function renderUsersTable(usersToRender) {
+  const tbody = document.getElementById('users-table-body');
+  tbody.innerHTML = '';
+  
+  const fifteenMinutesAgo = new Date(Date.now() - 15 * 60 * 1000);
+
+  usersToRender.forEach(user => {
+    const tokens = user.tokens || 0;
+    const isBanned = user.banned === true;
+    
+    // Check if online (active within last 15 minutes)
+    let isOnline = false;
+    if (user.lastActive) {
+      const activeDate = user.lastActive.toDate ? user.lastActive.toDate() : new Date(user.lastActive);
+      if (activeDate >= fifteenMinutesAgo) {
+        isOnline = true;
       }
     }
 
@@ -480,44 +531,93 @@ async function loadUsers() {
         <div style="display: flex; align-items: center; gap: 8px;">
           <span class="status-dot ${isOnline ? 'online' : 'offline'}" title="${isOnline ? 'Online' : 'Offline'}"></span>
           <div>
-            <div style="font-weight: 600;">${data.name || 'Unknown'}</div>
-            <div style="font-size: 0.8rem; color: var(--text-muted);">${data.email || 'No email'}</div>
+            <div style="font-weight: 600; display: flex; align-items: center; gap: 6px;">
+              ${user.name || 'Unknown'}
+              ${isBanned ? '<span style="font-size: 0.72rem; background: rgba(239, 68, 68, 0.2); color: #f87171; padding: 2px 6px; border-radius: 4px; border: 1px solid rgba(239,68,68,0.3); font-weight: 500;"><i class="fa-solid fa-user-slash"></i> Banned</span>' : ''}
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted);">${user.email || 'No email'}</div>
           </div>
         </div>
       </td>
       <td>
-        <div>${data.ip || 'Unknown IP'}</div>
+        <div>${user.ip || 'Unknown IP'}</div>
       </td>
       <td>
-        <span class="badge ${data.tier || 'free'}">${(data.tier || 'free').toUpperCase()}</span>
+        <span class="badge ${user.tier || 'free'}">${(user.tier || 'free').toUpperCase()}</span>
       </td>
       <td style="font-family: monospace; font-weight: bold;">
         ${tokens.toLocaleString()}
       </td>
       <td>
-        ${data.lastActive ? (data.lastActive.toDate ? data.lastActive.toDate() : new Date(data.lastActive)).toLocaleString() : 'Never'}
+        ${user.lastActive ? (user.lastActive.toDate ? user.lastActive.toDate() : new Date(user.lastActive)).toLocaleString() : 'Never'}
       </td>
       <td>
-        <button class="action-btn edit-user" data-uid="${uid}">Edit</button>
+        <div style="display: flex; gap: 6px;">
+          <button class="action-btn edit-user" data-uid="${user.uid}">Edit</button>
+          <button class="action-btn ${isBanned ? 'unban-user' : 'ban-user'}" data-uid="${user.uid}" style="background: ${isBanned ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)'}; color: ${isBanned ? '#10b981' : '#f43f5e'}; border: 1px solid ${isBanned ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}; padding: 6px 12px; font-size: 0.85rem; cursor: pointer;">
+            ${isBanned ? 'Unban' : 'Ban'}
+          </button>
+          <button class="action-btn delete-user-btn" data-uid="${user.uid}" style="background: rgba(239, 68, 68, 0.25); color: #f43f5e; border: 1px solid rgba(239, 68, 68, 0.4); padding: 6px 12px; font-size: 0.85rem; cursor: pointer;">
+            Delete
+          </button>
+        </div>
       </td>
     `;
     tbody.appendChild(tr);
   });
 
-  document.getElementById('stat-users').textContent = currentUsers.length;
-  document.getElementById('stat-online').textContent = onlineCount;
-  document.getElementById('stat-tokens').textContent = totalTokens.toLocaleString();
-
-  // Attach edit handlers
+  // Attach click listeners for actions
   document.querySelectorAll('.edit-user').forEach(btn => {
     btn.addEventListener('click', (e) => {
-      const uid = e.target.dataset.uid;
+      const uid = e.target.closest('.edit-user').dataset.uid;
       openEditModal(uid);
     });
   });
 
-  // Render Charts
-  updateCharts(currentUsers);
+  document.querySelectorAll('.ban-user').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const uid = e.target.closest('.ban-user').dataset.uid;
+      const user = currentUsers.find(u => u.uid === uid);
+      if (confirm(`Are you sure you want to BAN ${user?.name || 'this user'}? They will be locked out of the AI chat service immediately.`)) {
+        try {
+          await updateDoc(doc(db, 'users', uid), { banned: true });
+          await loadUsers();
+        } catch (err) {
+          alert('Error banning user: ' + err.message);
+        }
+      }
+    });
+  });
+
+  document.querySelectorAll('.unban-user').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const uid = e.target.closest('.unban-user').dataset.uid;
+      const user = currentUsers.find(u => u.uid === uid);
+      if (confirm(`Are you sure you want to UNBAN ${user?.name || 'this user'}?`)) {
+        try {
+          await updateDoc(doc(db, 'users', uid), { banned: false });
+          await loadUsers();
+        } catch (err) {
+          alert('Error unbanning user: ' + err.message);
+        }
+      }
+    });
+  });
+
+  document.querySelectorAll('.delete-user-btn').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      const uid = e.target.closest('.delete-user-btn').dataset.uid;
+      const user = currentUsers.find(u => u.uid === uid);
+      if (confirm(`Are you sure you want to DELETE ${user?.name || 'this user'} permanently? This will erase their tokens and cannot be undone.`)) {
+        try {
+          await deleteDoc(doc(db, 'users', uid));
+          await loadUsers();
+        } catch (err) {
+          alert('Error deleting user: ' + err.message);
+        }
+      }
+    });
+  });
 }
 
 function updateCharts(users) {

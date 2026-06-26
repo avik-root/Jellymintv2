@@ -172,10 +172,37 @@ app.post('/api/chat', verifyToken, async (req, res) => {
     const settingsSnap = await db.collection('settings').doc('global').get();
     const settings = settingsSnap.exists ? settingsSnap.data() : { freeForAll: false, limits: { free: 5000, pro: 50000, advanced: 1000000 } };
     
+    // Check for Maintenance Mode (Admins are exempt)
+    if (settings.maintenanceMode) {
+      const emailLower = (req.user.email || '').trim().toLowerCase();
+      let isAdmin = emailLower === 'aviksamantaofficial@gmail.com';
+      if (!isAdmin && emailLower) {
+        const adminDoc = await db.collection('admins').doc(emailLower).get();
+        if (adminDoc.exists) {
+          isAdmin = true;
+        }
+      }
+
+      if (!isAdmin) {
+        return res.status(503).json({ 
+          error: 'maintenance',
+          details: 'Jellymint is currently undergoing system upgrades. We will be back online shortly.' 
+        });
+      }
+    }
+
+    // Check if user is banned
+    const userSnap = await userRef.get();
+    if (userSnap.exists && userSnap.data().banned === true) {
+      return res.status(403).json({
+        error: 'banned',
+        details: 'Your account has been banned from using the AI service. Please contact support.'
+      });
+    }
+
     let userTokens = 0;
     
     if (!settings.freeForAll) {
-      const userSnap = await userRef.get();
       const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
       
       if (!userSnap.exists) {

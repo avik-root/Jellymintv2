@@ -692,8 +692,14 @@
 
       <!-- Users View -->
       <div id="view-users" class="view">
-        <div class="page-header">
+        <div class="page-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
           <div class="page-title">User Management</div>
+          <div style="display: flex; gap: 10px; align-items: center;">
+            <input type="text" id="user-search-input" placeholder="Search by name or email..." style="background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 15px; color: white; outline: none; font-family: inherit; width: 260px; font-size: 0.9rem;">
+            <button id="user-search-btn" class="action-btn" style="background: var(--primary-mint); color: #090d16; border: none; font-weight: 600; padding: 10px 20px; border-radius: 8px; cursor: pointer;">
+              <i class="fa-solid fa-magnifying-glass"></i> Search
+            </button>
+          </div>
         </div>
         <div class="table-container">
           <table>
@@ -742,6 +748,28 @@
             </div>
             <label class="switch">
               <input type="checkbox" id="setting-tunnel-enabled">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+            <div>
+              <div style="font-weight: 600;">Maintenance Mode</div>
+              <div style="font-size: 0.9rem; color: var(--text-muted);">Blocks standard user AI chats and shows maintenance overlay.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-maintenance-mode">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+            <div>
+              <div style="font-weight: 600;">Coming Soon Mode</div>
+              <div style="font-size: 0.9rem; color: var(--text-muted);">Redirects standard users to a beautiful Coming Soon quote portal.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-coming-soon-mode">
               <span class="slider"></span>
             </label>
           </div>

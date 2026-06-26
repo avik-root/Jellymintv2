@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coming Soon - Jellymint</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="/src/style.css">
+  <style>
+    body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+      margin: 0;
+      font-family: 'Outfit', sans-serif;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .coming-soon-container {
+      z-index: 10;
+      width: 100%;
+      max-width: 540px;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+
+    .glass-card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(30px) saturate(190%);
+      -webkit-backdrop-filter: blur(30px) saturate(190%);
+      padding: 3.5rem 3rem;
+      border-radius: 28px;
+      text-align: center;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.45), 
+                  inset 0 1px 0 rgba(255,255,255,0.1),
+                  0 0 40px rgba(20, 184, 166, 0.03);
+      transition: all 0.3s ease;
+    }
+
+    .glass-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(20, 184, 166, 0.25);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.55), 
+                  inset 0 1px 0 rgba(255,255,255,0.15),
+                  0 0 50px rgba(20, 184, 166, 0.15);
+    }
+
+    .logo-wrapper {
+      margin-bottom: 1.5rem;
+      display: inline-block;
+      position: relative;
+    }
+
+    .logo-img {
+      width: 80px;
+      filter: drop-shadow(0 0 15px rgba(20, 184, 166, 0.3));
+      animation: pulse 3s infinite alternate;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); filter: drop-shadow(0 0 15px rgba(20, 184, 166, 0.3)); }
+      100% { transform: scale(1.05); filter: drop-shadow(0 0 25px rgba(20, 184, 166, 0.6)); }
+    }
+
+    .title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, var(--primary-mint, #14b8a6) 0%, #2dd4bf 50%, #3b82f6 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
+
+    .subtitle {
+      color: #94a3b8;
+      margin-bottom: 2rem;
+      font-size: 1.1rem;
+      line-height: 1.5;
+    }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(20, 184, 166, 0.25) 50%, transparent);
+      margin: 2rem 0;
+      width: 100%;
+    }
+
+    .quote-box {
+      min-height: 120px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: opacity 0.5s ease-in-out;
+    }
+
+    .quote-text {
+      font-size: 1.15rem;
+      font-style: italic;
+      color: #f1f5f9;
+      line-height: 1.6;
+      margin-bottom: 10px;
+      font-weight: 300;
+    }
+
+    .quote-author {
+      font-size: 0.9rem;
+      color: var(--primary-mint, #14b8a6);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .fade-out {
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- WebGL Background -->
+  <div id="prism-bg" style="position: absolute; inset: 0; z-index: 0; pointer-events: none;"></div>
+
+  <div class="coming-soon-container">
+    <div class="glass-card">
+      <div class="logo-wrapper">
+        <img src="/logo.svg" alt="Jellymint Logo" class="logo-img">
+      </div>
+      <div class="title">Coming Soon</div>
+      <div class="subtitle">A secure intelligence workspace is currently being forged.</div>
+      
+      <div class="divider"></div>
+
+      <div class="quote-box" id="quote-container">
+        <div class="quote-text" id="quote-text">"The best way to predict the future is to invent it."</div>
+        <div class="quote-author" id="quote-author">Alan Kay</div>
+      </div>
+
+      <div style="margin-top: 3rem; font-size: 0.82rem; color: #64748b; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px;">
+        Developed by <span style="color: var(--primary-mint, #14b8a6); font-weight: 600;">MintFire</span>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="/src/coming-soon.js"></script>
+</body>
+</html>

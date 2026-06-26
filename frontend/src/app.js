@@ -43,9 +43,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!tokenBalanceEl) return;
     
     if (window.freeForAll) {
-      tokenBalanceEl.textContent = 'Unlimited';
-      tokenBalanceEl.style.color = '#10b981';
-      tokenBalanceEl.style.background = 'rgba(16, 185, 129, 0.1)';
+      tokenBalanceEl.textContent = 'FREE FOR ALL';
+      tokenBalanceEl.style.color = '#38bdf8';
+      tokenBalanceEl.style.background = 'rgba(56, 189, 248, 0.1)';
     } else {
       tokenBalanceEl.textContent = (tokens || 0).toLocaleString() + ' tokens';
       tokenBalanceEl.style.color = 'var(--primary-mint)';
@@ -53,11 +53,121 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Lockdown and Mode Checks
+  let isCheckingLockdowns = false;
+  async function checkLockdownStates(user, settingsData) {
+    if (isCheckingLockdowns) return;
+    isCheckingLockdowns = true;
+    
+    try {
+      const existingBanned = document.getElementById('lockdown-banned-overlay');
+      const existingMaint = document.getElementById('lockdown-maint-overlay');
+      if (existingBanned) existingBanned.remove();
+      if (existingMaint) existingMaint.remove();
+
+      if (!user) {
+        isCheckingLockdowns = false;
+        return;
+      }
+
+      // 1. Fetch user doc to check ban
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      if (userDoc.exists() && userDoc.data().banned === true) {
+        const overlay = document.createElement('div');
+        overlay.id = 'lockdown-banned-overlay';
+        Object.assign(overlay.style, {
+          position: 'fixed',
+          inset: '0',
+          background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: '99999',
+          color: 'white',
+          textAlign: 'center',
+          fontFamily: "'Outfit', sans-serif",
+          padding: '20px'
+        });
+        overlay.innerHTML = `
+          <div style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.08); padding: 3rem 2.5rem; border-radius: 24px; max-width: 440px; box-shadow: 0 30px 60px rgba(0,0,0,0.5);">
+            <i class="fa-solid fa-ban" style="color: #ef4444; font-size: 3.5rem; margin-bottom: 20px;"></i>
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 10px; background: linear-gradient(135deg, #ef4444, #f43f5e); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Account Suspended</h1>
+            <p style="color: #94a3b8; line-height: 1.6; margin-bottom: 20px;">Your account has been banned from using the AI service. If you believe this is a mistake, please contact support.</p>
+            <button id="banned-sign-out" class="action-btn" style="background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; padding: 10px 20px; border-radius: 8px; cursor: pointer;">Sign Out</button>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+        
+        document.getElementById('banned-sign-out').addEventListener('click', () => {
+          signOut(auth).then(() => {
+            window.location.href = '/login/';
+          });
+        });
+        isCheckingLockdowns = false;
+        return;
+      }
+
+      // 2. Check Admin privilege for Maintenance/Coming Soon exemption
+      const emailLower = (user.email || '').trim().toLowerCase();
+      let isAdmin = emailLower === 'aviksamantaofficial@gmail.com';
+      if (!isAdmin && emailLower) {
+        const adminDoc = await getDoc(doc(db, 'admins', emailLower));
+        if (adminDoc.exists()) {
+          isAdmin = true;
+        }
+      }
+
+      if (isAdmin) {
+        isCheckingLockdowns = false;
+        return;
+      }
+
+      // 3. Coming Soon Redirect
+      if (settingsData && settingsData.comingSoonMode === true) {
+        window.location.href = '/coming-soon/';
+        isCheckingLockdowns = false;
+        return;
+      }
+
+      // 4. Maintenance Overlay
+      if (settingsData && settingsData.maintenanceMode === true) {
+        const overlay = document.createElement('div');
+        overlay.id = 'lockdown-maint-overlay';
+        Object.assign(overlay.style, {
+          position: 'fixed',
+          inset: '0',
+          background: 'radial-gradient(circle at center, #1e293b 0%, #0f172a 100%)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: '99999',
+          color: 'white',
+          textAlign: 'center',
+          fontFamily: "'Outfit', sans-serif",
+          padding: '20px'
+        });
+        overlay.innerHTML = `
+          <div style="background: rgba(255, 255, 255, 0.03); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.08); padding: 3rem 2.5rem; border-radius: 24px; max-width: 440px; box-shadow: 0 30px 60px rgba(0,0,0,0.5);">
+            <i class="fa-solid fa-screwdriver-wrench" style="color: var(--primary-mint, #14b8a6); font-size: 3.5rem; margin-bottom: 20px;"></i>
+            <h1 style="font-size: 2rem; font-weight: 700; margin-bottom: 10px; background: linear-gradient(135deg, var(--primary-mint, #14b8a6), #2dd4bf); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Under Maintenance</h1>
+            <p style="color: #94a3b8; line-height: 1.6;">Jellymint is currently undergoing system upgrades. We will be back online shortly. Thank you for your patience!</p>
+          </div>
+        `;
+        document.body.appendChild(overlay);
+      }
+    } catch (e) {
+      console.warn("Error checking lockdown states:", e);
+    }
+    
+    isCheckingLockdowns = false;
+  }
+
   // Real-time Settings Listener
   let isInitialLoad = true;
   unsubscribeSettings = onSnapshot(doc(db, 'settings', 'global'), (settingsSnap) => {
     if (settingsSnap.exists()) {
       const data = settingsSnap.data();
+      window.globalSettingsData = data;
       let apiUrlChanged = false;
       
       if (data.apiUrl && data.apiUrl !== API_BASE) {
@@ -84,6 +194,10 @@ document.addEventListener('DOMContentLoaded', () => {
         fetchModels();
         isInitialLoad = false;
       }
+
+      if (auth.currentUser) {
+        checkLockdownStates(auth.currentUser, data);
+      }
     }
   }, (error) => {
     console.warn("Could not subscribe to global settings in real-time:", error);
@@ -103,6 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } else {
       currentUser = user;
+      await checkLockdownStates(user, window.globalSettingsData);
       document.getElementById('bot-name').textContent = user.displayName || 'User';
 
       // Update sidebar avatar with user's Google photo
