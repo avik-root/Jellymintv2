@@ -51,20 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
-
-  // Admin bypass redirect
-  onAuthStateChanged(auth, async (user) => {
-    if (user) {
-      try {
-        const adminDoc = await getDoc(doc(db, 'admins', user.email.toLowerCase()));
-        if (adminDoc.exists() || user.email.toLowerCase() === 'aviksamantaofficial@gmail.com') {
-          window.location.href = '/chat/';
-        }
-      } catch (err) {
-        console.error("Admin check failed in coming soon page:", err);
-      }
-    }
-  });
 });
 
 // WebGL Prism shader implementation using OGL

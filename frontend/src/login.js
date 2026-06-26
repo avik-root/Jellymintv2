@@ -1,4 +1,4 @@
-import { auth, googleProvider, signInWithPopup, onAuthStateChanged } from './firebase.js';
+import { auth, googleProvider, signInWithPopup, onAuthStateChanged, db, doc, onSnapshot } from './firebase.js';
 import { Renderer, Triangle, Program, Mesh } from 'ogl';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,11 +16,21 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-
+  // Subscribe to global settings to check if coming soon mode is active
+  let isComingSoon = false;
+  onSnapshot(doc(db, 'settings', 'global'), (snap) => {
+    if (snap.exists()) {
+      const data = snap.data();
+      isComingSoon = (data.comingSoonMode === true);
+      if (isComingSoon) {
+        window.location.href = '/coming-soon/';
+      }
+    }
+  });
 
   // If already logged in, redirect to chat
   onAuthStateChanged(auth, (user) => {
-    if (user) {
+    if (user && !isComingSoon) {
       window.location.href = '/chat/';
     }
   });
