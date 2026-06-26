@@ -107,7 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // 2. Check Admin privilege for Maintenance/Coming Soon exemption
+      // 2. Coming Soon Redirect (No Admin Exemption)
+      if (settingsData && settingsData.comingSoonMode === true) {
+        window.location.href = '/coming-soon/';
+        isCheckingLockdowns = false;
+        return;
+      }
+
+      // 3. Check Admin privilege for Maintenance exemption
       const emailLower = (user.email || '').trim().toLowerCase();
       let isAdmin = emailLower === 'aviksamantaofficial@gmail.com';
       if (!isAdmin && emailLower) {
@@ -118,13 +125,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (isAdmin) {
-        isCheckingLockdowns = false;
-        return;
-      }
-
-      // 3. Coming Soon Redirect
-      if (settingsData && settingsData.comingSoonMode === true) {
-        window.location.href = '/coming-soon/';
         isCheckingLockdowns = false;
         return;
       }

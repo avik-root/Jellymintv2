@@ -70,7 +70,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
-      // 2. Check Admin privilege for Maintenance/Coming Soon exemption
+      // 2. Coming Soon Redirect (No Admin Exemption)
+      if (settingsData && settingsData.comingSoonMode === true) {
+        window.location.href = '/coming-soon/';
+        isCheckingLockdowns = false;
+        return;
+      }
+
+      // 3. Check Admin privilege for Maintenance exemption
       const emailLower = (user.email || '').trim().toLowerCase();
       let isAdmin = emailLower === 'aviksamantaofficial@gmail.com';
       if (!isAdmin && emailLower) {
@@ -81,13 +88,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (isAdmin) {
-        isCheckingLockdowns = false;
-        return;
-      }
-
-      // 3. Coming Soon Redirect
-      if (settingsData && settingsData.comingSoonMode === true) {
-        window.location.href = '/coming-soon/';
         isCheckingLockdowns = false;
         return;
       }
@@ -132,6 +132,20 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     await checkLockdownStates(user, window.globalSettingsData);
+
+    // Check if the current user is an admin to determine if upgrade controls should be active
+    const emailLower = (user.email || '').trim().toLowerCase();
+    isUserAdmin = emailLower === 'aviksamantaofficial@gmail.com';
+    if (!isUserAdmin && emailLower) {
+      try {
+        const adminDoc = await getDoc(doc(db, 'admins', emailLower));
+        if (adminDoc.exists()) {
+          isUserAdmin = true;
+        }
+      } catch (e) {
+        console.warn("Error checking admin privilege in profile auth:", e);
+      }
+    }
 
     // Ensure user document exists in Firestore with all required fields
     const userRef = doc(db, 'users', user.uid);
@@ -207,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let freeForAll = false;
     let userData = null;
     let apiUrl = 'https://spousal-scrabble-stamina.ngrok-free.dev';
+    let isUserAdmin = false;
 
     function updateUserUI() {
       if (!userData) return;
@@ -277,8 +292,13 @@ document.addEventListener('DOMContentLoaded', () => {
           } else {
             card.classList.remove('active');
             badgeEl.style.display = 'none';
-            btn.disabled = false;
-            btn.textContent = (tiersList.indexOf(t) > tiersList.indexOf(tier)) ? 'Upgrade Account' : 'Switch Plan';
+            if (isUserAdmin) {
+              btn.disabled = false;
+              btn.textContent = (tiersList.indexOf(t) > tiersList.indexOf(tier)) ? 'Upgrade Account' : 'Switch Plan';
+            } else {
+              btn.disabled = true;
+              btn.textContent = 'Contact Admin';
+            }
           }
         }
       });
@@ -386,6 +406,10 @@ document.addEventListener('DOMContentLoaded', () => {
       const btn = document.getElementById(`upgrade-btn-${t}`);
       if (btn) {
         btn.addEventListener('click', async () => {
+          if (!isUserAdmin) {
+            alert('Only administrators can change subscription tiers.');
+            return;
+          }
           const limit = limits[t] || 5000;
           btn.textContent = 'Updating...';
           
