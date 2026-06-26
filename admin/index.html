@@ -523,7 +523,8 @@
 
   <!-- Login Screen -->
   <div id="login-screen" class="overlay-screen" style="display: none;">
-    <div class="login-card">
+    <div id="prism-bg" style="position: absolute; inset: 0; z-index: 0; pointer-events: none;"></div>
+    <div class="login-card" style="z-index: 10;">
       <img src="/favicon.svg" alt="Logo" width="60" style="margin-bottom: 10px;">
       <h1>Admin Portal</h1>
       <p>Sign in with an authorized Google Workspace account.</p>

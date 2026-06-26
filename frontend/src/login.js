@@ -16,23 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Interactive 3D tilt effect following the mouse cursor
-  if (loginCard) {
-    document.addEventListener('mousemove', (e) => {
-      const cardRect = loginCard.getBoundingClientRect();
-      const cardCenterX = cardRect.left + cardRect.width / 2;
-      const cardCenterY = cardRect.top + cardRect.height / 2;
-      
-      const xAxis = (cardCenterX - e.clientX) / 15;
-      const yAxis = (e.clientY - cardCenterY) / 15;
-      
-      loginCard.style.transform = `rotateY(${xAxis}deg) rotateX(${yAxis}deg) translateZ(15px)`;
-    });
 
-    document.addEventListener('mouseleave', () => {
-      loginCard.style.transform = `rotateX(10deg) rotateY(-5deg) translateZ(0px)`;
-    });
-  }
 
   // If already logged in, redirect to chat
   onAuthStateChanged(auth, (user) => {

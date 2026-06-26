@@ -59,7 +59,6 @@
     }
 
     .login-perspective {
-      perspective: 1000px;
       z-index: 10;
       width: 100%;
       max-width: 420px;
@@ -68,31 +67,27 @@
     }
 
     .login-container {
-      background: rgba(15, 23, 42, 0.45);
-      backdrop-filter: blur(16px) saturate(180%);
-      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      background: rgba(10, 15, 30, 0.65);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
       padding: 3rem 2.5rem;
       border-radius: 24px;
       text-align: center;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), 
-                  inset 0 1px 0 rgba(255,255,255,0.1),
-                  0 0 40px rgba(20, 184, 166, 0.05);
-      transform-style: preserve-3d;
-      transform: rotateX(10deg) rotateY(-5deg);
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.4), 
+                  inset 0 1px 0 rgba(255,255,255,0.15),
+                  0 0 40px rgba(20, 184, 166, 0.03);
+      transition: all 0.3s ease;
     }
 
     .login-container:hover {
-      transform: rotateX(0deg) rotateY(0deg) translateZ(10px);
-      box-shadow: 0 35px 60px -10px rgba(0,0,0,0.6), 
-                  inset 0 1px 0 rgba(255,255,255,0.15),
+      border-color: rgba(20, 184, 166, 0.35);
+      box-shadow: 0 30px 60px rgba(0,0,0,0.55), 
+                  inset 0 1px 0 rgba(255,255,255,0.2),
                   0 0 50px rgba(20, 184, 166, 0.15);
-      border-color: rgba(20, 184, 166, 0.3);
     }
 
     .login-logo-wrapper {
-      transform: translateZ(50px);
       margin-bottom: 1.5rem;
       display: inline-block;
       position: relative;
@@ -116,7 +111,6 @@
       background: linear-gradient(135deg, var(--primary-mint, #14b8a6) 0%, #2dd4bf 50%, #3b82f6 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      transform: translateZ(40px);
       letter-spacing: -0.5px;
     }
 
@@ -124,7 +118,6 @@
       color: #94a3b8;
       margin-bottom: 2.5rem;
       font-size: 1rem;
-      transform: translateZ(30px);
       line-height: 1.5;
     }
 
@@ -144,19 +137,18 @@
       width: 100%;
       transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      transform: translateZ(20px);
       box-sizing: border-box;
     }
 
     .google-btn:hover {
       background: #ffffff;
-      transform: translateZ(35px) scale(1.02);
+      transform: scale(1.02);
       box-shadow: 0 20px 30px -10px rgba(20, 184, 166, 0.3),
                   0 4px 15px rgba(0,0,0,0.15);
     }
     
     .google-btn:active {
-      transform: translateZ(15px) scale(0.98);
+      transform: scale(0.98);
     }
 
     .google-icon {
@@ -169,7 +161,6 @@
       margin-top: 1.5rem;
       font-size: 0.9rem;
       min-height: 20px;
-      transform: translateZ(10px);
     }
   </style>
 </head>
