@@ -3,342 +3,694 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Profile - Jellymint</title>
-  <meta name="description" content="View and manage your Jellymint profile, token balance, and account settings.">
+  <title>Enterprise Portal - Jellymint</title>
+  <meta name="description" content="Manage your Jellymint account, tokens, tiers, and developer API settings.">
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="/src/style.css">
   <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-sidebar: #0d1321;
+      --card-bg: rgba(17, 24, 39, 0.4);
+      --border-light: rgba(255, 255, 255, 0.06);
+      --border-glow: rgba(16, 185, 129, 0.2);
+    }
+
     body {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: radial-gradient(circle at center, #0f172a 0%, #020617 100%);
+      background: radial-gradient(circle at center, #0d1527 0%, #050912 100%);
       margin: 0;
       font-family: 'Outfit', sans-serif;
-      padding: 20px;
-      overflow-y: auto;
       color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      overflow-x: hidden;
     }
 
-    .profile-page {
+    /* Main Container Layout */
+    .portal-container {
+      display: flex;
       width: 100%;
-      max-width: 600px;
-      animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      min-height: 100vh;
     }
 
-    @keyframes fadeInUp {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    /* Sidebar Styling */
+    .portal-sidebar {
+      width: 280px;
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border-light);
+      display: flex;
+      flex-direction: column;
+      padding: 30px 20px;
+      box-sizing: border-box;
+      flex-shrink: 0;
     }
 
-    /* Back button */
-    .back-btn {
-      display: inline-flex;
+    .sidebar-header {
+      display: flex;
       align-items: center;
-      gap: 8px;
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 0.95rem;
-      margin-bottom: 24px;
-      padding: 10px 16px;
-      border-radius: 10px;
-      transition: all 0.25s ease;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(15, 23, 42, 0.4);
-      backdrop-filter: blur(8px);
-    }
-    .back-btn:hover {
-      color: var(--primary-mint);
-      background: rgba(16, 185, 129, 0.08);
-      border-color: rgba(16, 185, 129, 0.2);
-      transform: translateX(-2px);
+      gap: 12px;
+      margin-bottom: 35px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border-light);
     }
 
-    /* Profile Header Card */
-    .profile-header-card {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(6, 182, 212, 0.08) 50%, rgba(99, 102, 241, 0.08) 100%);
-      border: 1px solid rgba(16, 185, 129, 0.15);
-      border-radius: 24px;
-      padding: 48px 36px;
+    .sidebar-logo {
+      width: 38px;
+      height: 38px;
+    }
+
+    .sidebar-brand {
+      font-weight: 700;
+      font-size: 1.25rem;
+      background: linear-gradient(135deg, #fff, var(--primary-mint));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .sidebar-user {
       text-align: center;
-      position: relative;
-      overflow: hidden;
-      margin-bottom: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-    }
-    .profile-header-card::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.08) 0%, transparent 50%);
-      animation: pulseGlow 8s ease-in-out infinite;
-      pointer-events: none;
-    }
-    @keyframes pulseGlow {
-      0%, 100% { transform: scale(1); opacity: 0.5; }
-      50% { transform: scale(1.1); opacity: 1; }
+      padding: 20px 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      margin-bottom: 30px;
     }
 
     .profile-avatar {
-      width: 110px;
-      height: 110px;
+      width: 76px;
+      height: 76px;
       border-radius: 50%;
-      border: 3px solid var(--primary-mint);
-      position: relative;
-      z-index: 1;
-      margin: 0 auto 20px;
+      border: 2px solid var(--primary-mint);
+      margin: 0 auto 12px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #090d16;
-      box-shadow: 0 0 35px rgba(16, 185, 129, 0.25);
+      background: #06090f;
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.15);
       overflow: hidden;
     }
+
     .profile-avatar img {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      border-radius: 50%;
     }
+
     .profile-avatar .avatar-fallback {
-      font-size: 3rem;
+      font-size: 2.2rem;
       color: var(--primary-mint);
     }
 
     .profile-name {
-      font-size: 2rem;
-      font-weight: 700;
-      position: relative;
-      z-index: 1;
-      background: linear-gradient(135deg, #fff 40%, var(--primary-mint) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 6px;
-      letter-spacing: -0.02em;
-    }
-    .profile-email {
-      color: var(--text-secondary);
-      font-size: 1rem;
-      position: relative;
-      z-index: 1;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 4px;
     }
 
-    /* Stats Row */
-    .stats-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-    .stat-card {
-      background: rgba(15, 23, 42, 0.4);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
-      padding: 28px 24px;
-      text-align: center;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-    }
-    .stat-card:hover {
-      border-color: rgba(16, 185, 129, 0.25);
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    }
-    .stat-icon {
-      font-size: 1.6rem;
-      margin-bottom: 12px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 52px;
-      height: 52px;
-      border-radius: 14px;
-    }
-    .stat-icon.tokens {
-      background: rgba(16, 185, 129, 0.12);
-      color: var(--primary-mint);
-    }
-    .stat-icon.tier {
-      background: rgba(99, 102, 241, 0.12);
-      color: var(--accent-indigo);
-    }
-    .stat-value {
-      font-size: 1.7rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 6px;
-      letter-spacing: -0.01em;
-    }
-    .stat-label {
+    .profile-email {
       font-size: 0.82rem;
       color: var(--text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.8px;
-      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
-    /* Info cards */
-    .info-card {
-      background: rgba(15, 23, 42, 0.4);
-      backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 20px;
-      padding: 28px;
-      margin-bottom: 24px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    .sidebar-nav {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-grow: 1;
     }
-    .info-card h3 {
-      font-size: 1.1rem;
-      font-weight: 700;
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 1px solid transparent;
+    }
+
+    .nav-item:hover {
       color: var(--text-primary);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .nav-item.active {
+      color: var(--primary-mint);
+      background: rgba(16, 185, 129, 0.06);
+      border-color: rgba(16, 185, 129, 0.12);
+      box-shadow: inset 0 0 8px rgba(16, 185, 129, 0.05);
+    }
+
+    .sidebar-footer {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 30px;
+    }
+
+    .sidebar-btn {
+      width: 100%;
+      padding: 11px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      font-family: inherit;
+    }
+
+    .sidebar-btn.secondary {
+      background: transparent;
+      border: 1px solid var(--border-light);
+      color: var(--text-secondary);
+    }
+
+    .sidebar-btn.secondary:hover {
+      border-color: var(--primary-mint);
+      color: var(--primary-mint);
+      background: rgba(16, 185, 129, 0.04);
+    }
+
+    .sidebar-btn.danger {
+      background: rgba(239, 68, 68, 0.08);
+      border: 1px solid rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+    }
+
+    .sidebar-btn.danger:hover {
+      background: #ef4444;
+      color: #fff;
+      border-color: #ef4444;
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.25);
+    }
+
+    /* Content Area Layout */
+    .portal-content {
+      flex-grow: 1;
+      padding: 40px;
+      overflow-y: auto;
+      box-sizing: border-box;
+    }
+
+    /* Section Views */
+    .portal-view {
+      display: none;
+      animation: fadeIn 0.4s ease-out;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .portal-view.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .view-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-top: 0;
+      margin-bottom: 24px;
+      letter-spacing: -0.02em;
+    }
+
+    /* Cards Grid */
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 24px;
+      margin-bottom: 30px;
+    }
+
+    .dashboard-card {
+      background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border-light);
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      transition: border-color 0.25s ease;
+    }
+
+    .dashboard-card:hover {
+      border-color: rgba(16, 185, 129, 0.15);
+    }
+
+    .dashboard-card h3 {
+      margin-top: 0;
       margin-bottom: 20px;
+      font-size: 1.15rem;
+      font-weight: 600;
       display: flex;
       align-items: center;
       gap: 10px;
-      letter-spacing: -0.01em;
+      color: #fff;
     }
-    .info-card h3 i {
+
+    .dashboard-card h3 i {
       color: var(--primary-mint);
     }
-    .info-row {
+
+    /* Token Progress Meter */
+    .meter-container {
+      margin-top: 15px;
+    }
+
+    .meter-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 14px 0;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      margin-bottom: 12px;
     }
-    .info-row:last-child {
+
+    .meter-label {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }
+
+    .meter-value {
+      font-size: 0.85rem;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 6px;
+    }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .progress-bar-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-cyan), var(--primary-mint));
+      border-radius: 6px;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .meter-footer {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      margin-top: 8px;
+    }
+
+    /* Info Table Details */
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 13px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
+
+    .detail-row:last-child {
       border-bottom: none;
       padding-bottom: 0;
     }
-    .info-row:first-of-type {
+
+    .detail-row:first-child {
       padding-top: 0;
     }
-    .info-label {
+
+    .detail-label {
       color: var(--text-secondary);
-      font-size: 0.92rem;
-    }
-    .info-value {
-      color: var(--text-primary);
-      font-weight: 600;
-      font-size: 0.92rem;
+      font-size: 0.9rem;
     }
 
-    /* Tier badge */
+    .detail-value {
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
     .tier-badge {
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-size: 0.78rem;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.75rem;
       font-weight: 700;
       text-transform: uppercase;
-      letter-spacing: 0.8px;
+      letter-spacing: 0.6px;
       border: 1px solid transparent;
     }
+
     .tier-badge.free {
       background: rgba(148, 163, 184, 0.1);
       color: #94a3b8;
       border-color: rgba(148, 163, 184, 0.15);
     }
+
     .tier-badge.pro {
       background: rgba(59, 130, 246, 0.1);
       color: #3b82f6;
       border-color: rgba(59, 130, 246, 0.15);
     }
+
     .tier-badge.advanced {
       background: rgba(20, 184, 166, 0.1);
       color: var(--primary-mint);
       border-color: rgba(20, 184, 166, 0.15);
     }
 
-    /* Buttons */
-    .profile-actions {
-      display: flex;
+    /* Overview Stats Row */
+    .overview-stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 16px;
-    }
-    .profile-btn {
-      flex: 1;
-      padding: 16px 24px;
-      border-radius: 14px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      border: none;
-      font-family: inherit;
-    }
-    .profile-btn.primary {
-      background: linear-gradient(135deg, var(--primary-mint), var(--accent-cyan));
-      color: #0f172a;
-    }
-    .profile-btn.primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
-    }
-    .profile-btn.danger {
-      background: transparent;
-      border: 1px solid rgba(239, 68, 68, 0.3);
-      color: #ef4444;
-    }
-    .profile-btn.danger:hover {
-      background: rgba(239, 68, 68, 0.08);
-      border-color: #ef4444;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(239, 68, 68, 0.15);
+      margin-bottom: 24px;
     }
 
-    /* Loading state */
-    .profile-loading {
+    .stat-mini-card {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-light);
+      border-radius: 16px;
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-mini-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
+    .stat-mini-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-weight: 600;
+    }
+
+    /* Upgrade Plans Grid */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .plan-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-light);
+      border-radius: 20px;
+      padding: 30px 24px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 18px;
-      padding: 80px 0;
-      color: var(--text-secondary);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      transition: all 0.3s ease;
     }
-    .profile-loading i {
+
+    .plan-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .plan-card.active {
+      border-color: var(--primary-mint);
+      box-shadow: 0 0 25px rgba(16, 185, 129, 0.15);
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.05) 0%, rgba(9, 13, 22, 0.4) 100%);
+    }
+
+    .active-indicator {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      background: var(--primary-mint);
+      color: #050912;
+      font-size: 0.7rem;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .plan-tier {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .plan-tokens {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+
+    .plan-tokens span {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 400;
+    }
+
+    .plan-features {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 30px;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-light);
+      padding-top: 20px;
+    }
+
+    .plan-features li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .plan-features li i {
+      color: var(--primary-mint);
+      font-size: 0.9rem;
+    }
+
+    .plan-btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: 1px solid var(--border-light);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.25s ease;
+    }
+
+    .plan-btn:hover:not(:disabled) {
+      background: var(--primary-mint);
+      color: #050912;
+      border-color: var(--primary-mint);
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.25);
+    }
+
+    .plan-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      border-color: rgba(255,255,255,0.05);
+      color: var(--text-muted);
+    }
+
+    /* API Developer Panel */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .input-btn-group {
+      display: flex;
+      gap: 10px;
+    }
+
+    .copyable-input {
+      flex-grow: 1;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid var(--border-light);
+      border-radius: 10px;
+      padding: 12px 14px;
+      color: #fff;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .copyable-input:focus {
+      border-color: var(--primary-mint);
+    }
+
+    .btn-action {
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border: none;
+      font-family: inherit;
+      transition: all 0.2s ease;
+    }
+
+    .btn-action.primary {
+      background: linear-gradient(135deg, var(--primary-mint), var(--accent-cyan));
+      color: #050912;
+    }
+
+    .btn-action.primary:hover {
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+      transform: translateY(-1px);
+    }
+
+    .btn-action.secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-light);
+      color: var(--text-primary);
+    }
+
+    .btn-action.secondary:hover {
+      background: rgba(255, 255, 255, 0.08);
+      border-color: var(--primary-mint);
+    }
+
+    /* Code Snippet box */
+    .code-snippet-box {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-light);
+      border-radius: 12px;
+      padding: 18px;
+      margin-top: 15px;
+      overflow-x: auto;
+      font-family: 'Fira Code', monospace;
+      font-size: 0.8rem;
+      line-height: 1.5;
+      color: #94a3b8;
+    }
+
+    .code-comment {
+      color: #64748b;
+    }
+
+    .code-keyword {
+      color: #f43f5e;
+    }
+
+    .code-string {
       color: var(--primary-mint);
     }
 
-    /* Responsive */
-    @media (max-width: 480px) {
-      .profile-header-card { padding: 36px 24px; }
-      .profile-name { font-size: 1.6rem; }
-      .stats-row { grid-template-columns: 1fr; }
-      .profile-actions { flex-direction: column; }
+    /* Page-level loading Overlay */
+    .page-loading-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: var(--bg-dark);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 15px;
+      z-index: 9999;
+      color: var(--text-secondary);
+    }
+
+    .page-loading-screen i {
+      color: var(--primary-mint);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 900px) {
+      .portal-container {
+        flex-direction: column;
+      }
+      .portal-sidebar {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border-light);
+        padding: 20px;
+      }
+      .sidebar-user {
+        display: none;
+      }
+      .portal-content {
+        padding: 20px;
+      }
+      .plans-grid {
+        grid-template-columns: 1fr;
+      }
     }
   </style>
 </head>
 <body>
-  <div class="profile-page">
-    <!-- Back to Chat -->
-    <a href="/chat/" class="back-btn">
-      <i class="fa-solid fa-arrow-left"></i> Back to Chat
-    </a>
 
-    <!-- Loading -->
-    <div id="profile-loading" class="profile-loading">
-      <i class="fa-solid fa-spinner fa-spin fa-2x"></i>
-      <p>Loading your profile...</p>
-    </div>
+  <!-- Fullscreen Loading Overlay -->
+  <div id="portal-loading" class="page-loading-screen">
+    <i class="fa-solid fa-circle-notch fa-spin fa-2x"></i>
+    <p style="font-weight: 500;">Establishing Secure Connection...</p>
+  </div>
 
-    <!-- Profile Content (hidden until loaded) -->
-    <div id="profile-content" style="display: none;">
-      <!-- Header Card -->
-      <div class="profile-header-card">
+  <!-- Main Portal UI -->
+  <div class="portal-container" id="portal-ui" style="display: none;">
+    
+    <!-- Sidebar -->
+    <aside class="portal-sidebar">
+      <div class="sidebar-header">
+        <img src="/logo.svg" alt="Jellymint Logo" class="sidebar-logo">
+        <span class="sidebar-brand">Jellymint Enterprise</span>
+      </div>
+
+      <div class="sidebar-user">
         <div class="profile-avatar" id="profile-avatar">
           <i class="fa-solid fa-user avatar-fallback"></i>
         </div>
@@ -346,74 +698,202 @@
         <div class="profile-email" id="profile-email">loading@email.com</div>
       </div>
 
-      <!-- Stats -->
-      <div class="stats-row">
-        <div class="stat-card">
-          <div class="stat-icon tokens">
-            <i class="fa-solid fa-coins"></i>
-          </div>
-          <div class="stat-value" id="stat-tokens">--</div>
-          <div class="stat-label">Token Balance</div>
+      <!-- Navigation tabs -->
+      <nav class="sidebar-nav">
+        <div class="nav-item active" data-target="overview" id="btn-nav-overview">
+          <i class="fa-solid fa-chart-pie"></i> Portal Overview
         </div>
-        <div class="stat-card">
-          <div class="stat-icon tier">
-            <i class="fa-solid fa-crown"></i>
-          </div>
-          <div class="stat-value" id="stat-tier">--</div>
-          <div class="stat-label">Account Tier</div>
+        <div class="nav-item" data-target="plans" id="btn-nav-plans">
+          <i class="fa-solid fa-crown"></i> Usage & Plans
         </div>
-      </div>
+        <div class="nav-item" data-target="api" id="btn-nav-api">
+          <i class="fa-solid fa-code"></i> Developer API
+        </div>
+      </nav>
 
-      <!-- Daily Token Allowance Progress Bar -->
-      <div class="info-card" id="token-usage-container" style="margin-bottom: 24px; display: none;">
-        <h3 style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-          <span><i class="fa-solid fa-gauge-high"></i> Daily Token Allowance</span>
-          <span id="token-percentage" style="font-size: 0.85rem; color: var(--primary-mint); font-weight: 700; background: rgba(20, 184, 166, 0.1); padding: 4px 10px; border-radius: 6px;">0% Remaining</span>
-        </h3>
-        <div class="progress-bar-wrapper" style="width: 100%; height: 12px; background: rgba(255, 255, 255, 0.05); border-radius: 6px; overflow: hidden; margin-top: 15px; border: 1px solid rgba(255, 255, 255, 0.05); position: relative;">
-          <div id="token-progress-bar" style="width: 0%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--primary-mint)); border-radius: 6px; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);"></div>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-secondary); margin-top: 10px;">
-          <span id="token-used-text">Remaining: 0 tokens</span>
-          <span id="token-limit-text">Allowance: 0 tokens</span>
-        </div>
-      </div>
-
-      <!-- Account Details -->
-      <div class="info-card">
-        <h3><i class="fa-solid fa-circle-info"></i> Account Details</h3>
-        <div class="info-row">
-          <span class="info-label">User ID</span>
-          <span class="info-value" id="info-uid" style="font-family: var(--font-mono, monospace); font-size: 0.8rem; opacity: 0.7;">--</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Email</span>
-          <span class="info-value" id="info-email">--</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Tier</span>
-          <span class="info-value"><span class="tier-badge free" id="info-tier-badge">FREE</span></span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Last Active</span>
-          <span class="info-value" id="info-last-active">--</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Account Created</span>
-          <span class="info-value" id="info-created">--</span>
-        </div>
-      </div>
-
-      <!-- Actions -->
-      <div class="profile-actions">
-        <button class="profile-btn primary" id="back-to-chat-btn">
-          <i class="fa-solid fa-comment-dots"></i> Back to Chat
+      <div class="sidebar-footer">
+        <button class="sidebar-btn secondary" id="back-to-chat-btn">
+          <i class="fa-solid fa-arrow-left"></i> Back to Chat
         </button>
-        <button class="profile-btn danger" id="sign-out-btn">
+        <button class="sidebar-btn danger" id="sign-out-btn">
           <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
         </button>
       </div>
-    </div>
+    </aside>
+
+    <!-- Right Side Main content area -->
+    <main class="portal-content">
+
+      <!-- ================= OVERVIEW VIEW ================= -->
+      <section class="portal-view active" id="view-overview">
+        <h2 class="view-title">Portal Overview</h2>
+        
+        <!-- Account Quick Stats -->
+        <div class="overview-stats">
+          <div class="stat-mini-card">
+            <div class="stat-mini-label">Token Allowance</div>
+            <div class="stat-mini-value" id="mini-stat-tokens" style="color: var(--primary-mint);">--</div>
+          </div>
+          <div class="stat-mini-card">
+            <div class="stat-mini-label">Subscription Tier</div>
+            <div class="stat-mini-value" id="mini-stat-tier" style="color: var(--accent-cyan); font-weight: bold;">FREE</div>
+          </div>
+          <div class="stat-mini-card">
+            <div class="stat-mini-label">Network Status</div>
+            <div class="stat-mini-value" style="color: #10b981; font-size: 1.15rem; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 10px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block;"></span> Active
+            </div>
+          </div>
+        </div>
+
+        <div class="cards-grid">
+          <!-- Token Meter Card -->
+          <div class="dashboard-card" id="token-usage-container">
+            <h3><i class="fa-solid fa-chart-line"></i> Daily Token Usage</h3>
+            <div class="meter-container">
+              <div class="meter-header">
+                <span class="meter-label">Token Progress</span>
+                <span id="token-percentage" class="meter-value" style="color: var(--primary-mint); background: rgba(20, 184, 166, 0.1);">--% Remaining</span>
+              </div>
+              <div class="progress-bar-bg">
+                <div id="token-progress-bar" class="progress-bar-fill"></div>
+              </div>
+              <div class="meter-footer">
+                <span id="token-used-text">Remaining: 0 tokens</span>
+                <span id="token-limit-text">Allowance: 0 tokens</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Account info details -->
+          <div class="dashboard-card">
+            <h3><i class="fa-solid fa-shield-halved"></i> Enterprise Credentials</h3>
+            <div class="detail-row">
+              <span class="detail-label">User ID</span>
+              <span class="detail-value" id="info-uid" style="font-family: 'Fira Code', monospace; font-size: 0.8rem; color: #94a3b8;">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Portal Access Email</span>
+              <span class="detail-value" id="info-email">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Account Tier</span>
+              <span class="detail-value"><span class="tier-badge free" id="info-tier-badge">FREE</span></span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Last Synchronization</span>
+              <span class="detail-value" id="info-last-active">--</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Registered Since</span>
+              <span class="detail-value" id="info-created">--</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= PLANS VIEW ================= -->
+      <section class="portal-view" id="view-plans">
+        <h2 class="view-title">Subscription & Usage Plans</h2>
+        
+        <div class="plans-grid">
+          <!-- Free Plan -->
+          <div class="plan-card" id="plan-card-free">
+            <span class="active-indicator" id="badge-free" style="display: none;">Active</span>
+            <div class="plan-tier">Free Tier</div>
+            <div class="plan-tokens" id="plan-limit-free">5,000 <span>tok/day</span></div>
+            <ul class="plan-features">
+              <li><i class="fa-solid fa-circle-check"></i> 5,000 daily chat tokens</li>
+              <li><i class="fa-solid fa-circle-check"></i> Standard response rates</li>
+              <li><i class="fa-solid fa-circle-check"></i> Local Qwen models</li>
+              <li><i class="fa-solid fa-circle-xmark" style="color: #ef4444;"></i> Developer API credentials</li>
+            </ul>
+            <button class="plan-btn" id="upgrade-btn-free" disabled>Current Plan</button>
+          </div>
+
+          <!-- PRO Plan -->
+          <div class="plan-card" id="plan-card-pro">
+            <span class="active-indicator" id="badge-pro" style="display: none;">Active</span>
+            <div class="plan-tier" style="color: #3b82f6;">PRO Tier</div>
+            <div class="plan-tokens" id="plan-limit-pro">50,000 <span>tok/day</span></div>
+            <ul class="plan-features">
+              <li><i class="fa-solid fa-circle-check"></i> 50,000 daily chat tokens</li>
+              <li><i class="fa-solid fa-circle-check"></i> 2x faster response speeds</li>
+              <li><i class="fa-solid fa-circle-check"></i> Access to larger model variants</li>
+              <li><i class="fa-solid fa-circle-check"></i> Developer API token generator</li>
+            </ul>
+            <button class="plan-btn" id="upgrade-btn-pro">Upgrade Account</button>
+          </div>
+
+          <!-- Advanced Plan -->
+          <div class="plan-card" id="plan-card-advanced">
+            <span class="active-indicator" id="badge-advanced" style="display: none;">Active</span>
+            <div class="plan-tier" style="color: var(--primary-mint);">Advanced Tier</div>
+            <div class="plan-tokens" id="plan-limit-advanced">1,000,000 <span>tok/day</span></div>
+            <ul class="plan-features">
+              <li><i class="fa-solid fa-circle-check"></i> 1,000,000 daily chat tokens</li>
+              <li><i class="fa-solid fa-circle-check"></i> Priority processing speed</li>
+              <li><i class="fa-solid fa-circle-check"></i> Custom system prompts</li>
+              <li><i class="fa-solid fa-circle-check"></i> High-volume Developer API</li>
+            </ul>
+            <button class="plan-btn" id="upgrade-btn-advanced">Upgrade Account</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= DEVELOPER API VIEW ================= -->
+      <section class="portal-view" id="view-api">
+        <h2 class="view-title">Developer API Configurations</h2>
+        
+        <div class="cards-grid" style="grid-template-columns: 1fr;">
+          <div class="dashboard-card">
+            <h3><i class="fa-solid fa-key"></i> Authentication Credentials</h3>
+            
+            <div id="api-disabled-banner" style="padding: 20px; background: rgba(239, 68, 68, 0.08); border: 1px solid rgba(239, 68, 68, 0.15); border-radius: 12px; margin-bottom: 20px;">
+              <h4 style="margin: 0 0 8px; color: #ef4444; font-size: 1rem;"><i class="fa-solid fa-triangle-exclamation"></i> API Access Suspended</h4>
+              <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
+                Developer API credentials require a subscription. Please upgrade to a <strong style="color: #3b82f6;">PRO</strong> or <strong style="color: var(--primary-mint);">Advanced</strong> tier to unlock this tab and integrate Jellymint into your projects.
+              </p>
+            </div>
+
+            <div id="api-active-panel" style="display: none;">
+              <div class="form-group">
+                <label for="api-key-input">Personal API Bearer Token</label>
+                <div class="input-btn-group">
+                  <input type="text" id="api-key-input" class="copyable-input" readonly value="Click Generate to create a secure key">
+                  <button class="btn-action primary" id="generate-api-btn"><i class="fa-solid fa-arrows-rotate"></i> Generate</button>
+                  <button class="btn-action secondary" id="copy-api-btn"><i class="fa-solid fa-copy"></i> Copy</button>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin-top: 30px;">
+                <label>API Service URL</label>
+                <div class="input-btn-group">
+                  <input type="text" id="api-url-input" class="copyable-input" readonly value="https://spousal-scrabble-stamina.ngrok-free.dev">
+                  <button class="btn-action secondary" id="copy-url-btn"><i class="fa-solid fa-copy"></i> Copy</button>
+                </div>
+              </div>
+
+              <h4 style="margin-top: 35px; margin-bottom: 10px; color: #fff; font-size: 1rem;"><i class="fa-solid fa-circle-question"></i> Querying the API via Command Line</h4>
+              <p style="margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4;">
+                Use your bearer token to hit the endpoint directly using standard request tools like curl:
+              </p>
+
+              <div class="code-snippet-box">
+                <span class="code-keyword">curl</span> -X POST <span class="code-string">"<span id="code-snippet-url">https://spousal-scrabble-stamina.ngrok-free.dev</span>/api/chat"</span> \<br>
+                &nbsp;&nbsp;-H <span class="code-string">"Content-Type: application/json"</span> \<br>
+                &nbsp;&nbsp;-H <span class="code-string">"Authorization: Bearer <span id="code-snippet-token">YOUR_API_TOKEN</span>"</span> \<br>
+                &nbsp;&nbsp;-d '<span class="code-string">{<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;"model": "qwen",<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;"messages": [{"role": "user", "content": "Hello!"}]<br>
+                &nbsp;&nbsp;}</span>'
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </main>
   </div>
 
   <script type="module" src="/src/profile.js"></script>

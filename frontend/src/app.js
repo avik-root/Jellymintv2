@@ -31,31 +31,65 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Firebase Auth State Observer
   let unsubscribeUser = null;
-  onAuthStateChanged(auth, async (user) => {
-    
-    // Timeout helper
-    const withTimeout = (promise, ms) => Promise.race([
-      promise,
-      new Promise((_, reject) => setTimeout(() => reject(new Error('FIRESTORE_TIMEOUT')), ms))
-    ]);
+  let unsubscribeSettings = null;
 
-    // Auto-discover the backend ngrok API URL and default model from Firestore
-    try {
-      const dbSnap = await withTimeout(getDoc(doc(db, 'settings', 'global')), 5000);
-      if (dbSnap.exists()) {
-        const data = dbSnap.data();
-        if (data.apiUrl) API_BASE = data.apiUrl;
-        if (data.defaultModel) {
-          window.defaultModelFromSettings = data.defaultModel;
+  window.currentUserTokens = 0;
+  window.freeForAll = false;
+  window.userManuallySelectedModel = false;
+
+  function updateTokenBalanceDisplay(tokens) {
+    const tokenBalanceEl = document.getElementById('token-balance');
+    if (!tokenBalanceEl) return;
+    
+    if (window.freeForAll) {
+      tokenBalanceEl.textContent = 'Unlimited';
+      tokenBalanceEl.style.color = '#10b981';
+      tokenBalanceEl.style.background = 'rgba(16, 185, 129, 0.1)';
+    } else {
+      tokenBalanceEl.textContent = (tokens || 0).toLocaleString() + ' tokens';
+      tokenBalanceEl.style.color = 'var(--primary-mint)';
+      tokenBalanceEl.style.background = 'rgba(20, 184, 166, 0.1)';
+    }
+  }
+
+  // Real-time Settings Listener
+  let isInitialLoad = true;
+  unsubscribeSettings = onSnapshot(doc(db, 'settings', 'global'), (settingsSnap) => {
+    if (settingsSnap.exists()) {
+      const data = settingsSnap.data();
+      let apiUrlChanged = false;
+      
+      if (data.apiUrl && data.apiUrl !== API_BASE) {
+        API_BASE = data.apiUrl;
+        apiUrlChanged = true;
+      }
+      
+      if (data.defaultModel) {
+        window.defaultModelFromSettings = data.defaultModel;
+        const modelSelect = document.getElementById('model-select');
+        if (modelSelect && !window.userManuallySelectedModel) {
+          if ([...modelSelect.options].some(o => o.value === data.defaultModel)) {
+            modelSelect.value = data.defaultModel;
+            const currentLoadedModel = document.getElementById('current-loaded-model');
+            if (currentLoadedModel) currentLoadedModel.textContent = data.defaultModel;
+          }
         }
       }
-    } catch (e) {
-      console.warn("Could not fetch dynamic API URL from Firestore", e);
+      
+      window.freeForAll = !!data.freeForAll;
+      updateTokenBalanceDisplay(window.currentUserTokens);
+      
+      if (apiUrlChanged || isInitialLoad) {
+        fetchModels();
+        fetchSystemStats();
+        isInitialLoad = false;
+      }
     }
-    
-    // Fetch models immediately after API URL discovery
-    fetchModels();
+  }, (error) => {
+    console.warn("Could not subscribe to global settings in real-time:", error);
+  });
 
+  onAuthStateChanged(auth, async (user) => {
     const signOutBtn = document.getElementById('sign-out-btn');
     if (!user) {
       if (unsubscribeUser) unsubscribeUser();
@@ -83,11 +117,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       loadHistoryFromServer();
 
-      // Listen to token balance
+      // Listen to token balance reactively
+      if (unsubscribeUser) unsubscribeUser();
       unsubscribeUser = onSnapshot(doc(db, 'users', user.uid), (docSnap) => {
         if (docSnap.exists()) {
-           const tokens = docSnap.data().tokens || 0;
-           document.getElementById('token-balance').textContent = tokens.toLocaleString() + ' tokens';
+           const userData = docSnap.data();
+           window.currentUserTokens = userData.tokens || 0;
+           updateTokenBalanceDisplay(window.currentUserTokens);
         }
       });
     }
@@ -202,6 +238,12 @@ document.addEventListener('DOMContentLoaded', () => {
         statusText.textContent = 'AI Service Connected';
         ollamaErrorBanner.classList.add('hidden');
         
+        // Show system stats and model select wrapper in header
+        const systemStatsEl = document.getElementById('header-system-stats');
+        if (systemStatsEl) systemStatsEl.style.display = 'flex';
+        const modelSelectWrapper = document.querySelector('.model-selector-wrapper');
+        if (modelSelectWrapper) modelSelectWrapper.style.display = 'flex';
+        
         activeModels = data.models;
         if (activeModels.length === 0) {
           modelSelect.innerHTML = '<option value="" disabled selected>No models installed</option>';
@@ -249,6 +291,12 @@ document.addEventListener('DOMContentLoaded', () => {
         modelSelect.innerHTML = '<option value="" disabled selected>AI Service Offline</option>';
         currentModelSpan.textContent = 'None';
         ollamaErrorBanner.classList.remove('hidden');
+        
+        // Hide system stats and model select wrapper in header
+        const systemStatsEl = document.getElementById('header-system-stats');
+        if (systemStatsEl) systemStatsEl.style.display = 'none';
+        const modelSelectWrapper = document.querySelector('.model-selector-wrapper');
+        if (modelSelectWrapper) modelSelectWrapper.style.display = 'none';
       }
     } catch (error) {
       console.error('Error fetching models:', error);
@@ -257,6 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   modelSelect.addEventListener('change', () => {
+    window.userManuallySelectedModel = true;
     currentLoadedModel.textContent = modelSelect.value;
     if (activeSessionId) {
       const activeSession = sessions.find(s => s.id === activeSessionId);

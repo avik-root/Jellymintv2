@@ -1,4 +1,4 @@
-import { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, collection, doc, setDoc, getDoc, getDocs, updateDoc } from './firebase.js';
+import { auth, db, googleProvider, signInWithPopup, signOut, onAuthStateChanged, collection, doc, setDoc, getDoc, getDocs, updateDoc, query, orderBy, limit } from './firebase.js';
 
 // DOM Elements
 const loadingScreen = document.getElementById('loading-screen');
@@ -117,7 +117,10 @@ document.querySelectorAll('.nav-item').forEach(item => {
 // --- Dashboard Logic ---
 let activityChartInstance = null;
 let tiersChartInstance = null;
-let sysinfoChartInstance = null;
+let cpuChartInstance = null;
+let ramChartInstance = null;
+let gpuChartInstance = null;
+let tokenUsageChartInstance = null;
 let apiBaseUrl = '';
 
 // Live system info datasets
@@ -127,60 +130,37 @@ const cpuData = Array(maxDataPoints).fill(0);
 const ramData = Array(maxDataPoints).fill(0);
 const gpuData = Array(maxDataPoints).fill(0);
 
-function initSysinfoChart() {
-  const canvas = document.getElementById('sysinfo-chart');
-  if (!canvas) return;
+function createSparkline(canvasId, label, data, color) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return null;
   const ctx = canvas.getContext('2d');
   
-  sysinfoChartInstance = new Chart(ctx, {
+  return new Chart(ctx, {
     type: 'line',
     data: {
       labels: sysLabels,
-      datasets: [
-        {
-          label: 'CPU Usage (%)',
-          data: cpuData,
-          borderColor: '#10b981',
-          backgroundColor: 'rgba(16, 185, 129, 0.05)',
-          borderWidth: 2,
-          pointRadius: 2,
-          pointHoverRadius: 5,
-          fill: true,
-          tension: 0.3
-        },
-        {
-          label: 'RAM Usage (%)',
-          data: ramData,
-          borderColor: '#06b6d4',
-          backgroundColor: 'rgba(6, 182, 212, 0.05)',
-          borderWidth: 2,
-          pointRadius: 2,
-          pointHoverRadius: 5,
-          fill: true,
-          tension: 0.3
-        },
-        {
-          label: 'GPU Usage (%)',
-          data: gpuData,
-          borderColor: '#8b5cf6',
-          backgroundColor: 'rgba(139, 92, 246, 0.05)',
-          borderWidth: 2,
-          pointRadius: 2,
-          pointHoverRadius: 5,
-          fill: true,
-          tension: 0.3
-        }
-      ]
+      datasets: [{
+        label: label,
+        data: data,
+        borderColor: color,
+        backgroundColor: color.replace('1)', '0.05)'),
+        borderWidth: 2,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        fill: true,
+        tension: 0.4
+      }]
     },
     options: {
       responsive: true,
       maintainAspectRatio: false,
       plugins: {
-        legend: {
-          position: 'top',
-          labels: {
-            color: '#94a3b8',
-            font: { family: 'Outfit', size: 11 }
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          callbacks: {
+            label: (context) => ` ${context.dataset.label}: ${context.raw}%`
           }
         }
       },
@@ -188,10 +168,10 @@ function initSysinfoChart() {
         y: {
           min: 0,
           max: 100,
-          grid: { color: 'rgba(255, 255, 255, 0.05)' },
+          grid: { color: 'rgba(255, 255, 255, 0.03)' },
           ticks: {
-            color: '#94a3b8',
-            font: { family: 'Outfit' },
+            color: '#64748b',
+            font: { family: 'Outfit', size: 9 },
             callback: value => value + '%'
           }
         },
@@ -204,10 +184,100 @@ function initSysinfoChart() {
   });
 }
 
+function initSysinfoCharts() {
+  cpuChartInstance = createSparkline('cpu-chart', 'CPU Usage', cpuData, 'rgba(16, 185, 129, 1)');
+  ramChartInstance = createSparkline('ram-chart', 'RAM Usage', ramData, 'rgba(6, 182, 212, 1)');
+  gpuChartInstance = createSparkline('gpu-chart', 'GPU Usage', gpuData, 'rgba(139, 92, 246, 1)');
+}
+
+async function updateTokenUsageChart() {
+  const canvas = document.getElementById('token-usage-chart');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  
+  try {
+    const usageRef = collection(db, 'token_usage');
+    const q = query(usageRef, orderBy('date', 'desc'), limit(7));
+    const snap = await getDocs(q);
+    
+    const dates = [];
+    const tokensUsed = [];
+    
+    snap.forEach(docSnap => {
+      const data = docSnap.data();
+      dates.push(data.date || docSnap.id);
+      tokensUsed.push(data.totalTokensUsed || 0);
+    });
+    
+    dates.reverse();
+    tokensUsed.reverse();
+    
+    const formattedDates = dates.map(d => {
+      try {
+        const dateObj = new Date(d);
+        return dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' });
+      } catch (e) {
+        return d;
+      }
+    });
+    
+    if (tokenUsageChartInstance) {
+      tokenUsageChartInstance.destroy();
+    }
+    
+    tokenUsageChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: formattedDates,
+        datasets: [{
+          label: 'Tokens Used',
+          data: tokensUsed,
+          backgroundColor: 'rgba(20, 184, 166, 0.4)',
+          borderColor: 'rgba(20, 184, 166, 0.8)',
+          borderWidth: 1.5,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (context) => ` Total Tokens: ${context.raw.toLocaleString()}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: {
+              color: '#94a3b8',
+              font: { family: 'Outfit' },
+              callback: value => value.toLocaleString()
+            }
+          },
+          x: {
+            grid: { display: false },
+            ticks: {
+              color: '#94a3b8',
+              font: { family: 'Outfit' }
+            }
+          }
+        }
+      }
+    });
+  } catch (error) {
+    console.error("Failed to load daily token usage:", error);
+  }
+}
+
 async function initDashboard() {
   await loadSettings();
   await loadUsers();
-  initSysinfoChart();
+  initSysinfoCharts();
+  updateTokenUsageChart();
   
   if (apiBaseUrl) {
     fetchSystemStats();
@@ -228,6 +298,9 @@ async function fetchSystemStats() {
       document.getElementById('stat-cpu').textContent = `${data.cpu}%`;
       document.getElementById('stat-ram').textContent = `${data.ram}%`;
       
+      const gpuStatEl = document.getElementById('stat-gpu');
+      if (gpuStatEl) gpuStatEl.textContent = `${data.gpu}%`;
+      
       // Update datasets
       cpuData.push(data.cpu || 0);
       cpuData.shift();
@@ -236,9 +309,9 @@ async function fetchSystemStats() {
       gpuData.push(data.gpu || 0);
       gpuData.shift();
       
-      if (sysinfoChartInstance) {
-        sysinfoChartInstance.update('none'); // Update without animation for rendering performance
-      }
+      if (cpuChartInstance) cpuChartInstance.update('none');
+      if (ramChartInstance) ramChartInstance.update('none');
+      if (gpuChartInstance) gpuChartInstance.update('none');
     }
   } catch (e) {
     // Suppress warning
@@ -570,7 +643,8 @@ document.getElementById('save-user-btn').addEventListener('click', async () => {
   
   await updateDoc(doc(db, 'users', uid), {
     tier: tier,
-    tokens: tokens
+    tokens: tokens,
+    lastActive: new Date() // Reset lastActive to now to prevent 24h reset overrides
   });
   
   modal.style.display = 'none';

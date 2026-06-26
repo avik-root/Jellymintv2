@@ -283,14 +283,30 @@ app.post('/api/chat', verifyToken, async (req, res) => {
     
     res.end();
 
-    // 4. Deduct tokens
-    if (!settings.freeForAll && eval_count > 0) {
-      console.log(`[Tokens] Deducting ${eval_count} tokens from user ${uid} (${req.user.email || 'No email'})`);
-      await userRef.update({
-        tokens: FieldValue.increment(-eval_count)
-      });
-    } else if (settings.freeForAll) {
-      console.log(`[Tokens] Free-for-all mode active, skipping deduction of ${eval_count} tokens for user ${uid}.`);
+    // 4. Deduct tokens & Track Daily Usage
+    if (eval_count > 0) {
+      // Track total daily token usage across all users
+      try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const usageRef = db.collection('token_usage').doc(todayStr);
+        await usageRef.set({
+          date: todayStr,
+          totalTokensUsed: FieldValue.increment(eval_count)
+        }, { merge: true });
+        console.log(`[Usage] Logged ${eval_count} tokens to daily usage (${todayStr})`);
+      } catch (usageError) {
+        console.error('[Usage] Failed to log daily usage:', usageError);
+      }
+
+      // Deduct from user account if freeForAll is inactive
+      if (!settings.freeForAll) {
+        console.log(`[Tokens] Deducting ${eval_count} tokens from user ${uid} (${req.user.email || 'No email'})`);
+        await userRef.update({
+          tokens: FieldValue.increment(-eval_count)
+        });
+      } else {
+        console.log(`[Tokens] Free-for-all active. Skipped user deduction of ${eval_count} tokens for ${uid}.`);
+      }
     }
 
   } catch (error) {
