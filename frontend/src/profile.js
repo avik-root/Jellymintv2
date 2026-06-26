@@ -1,4 +1,4 @@
-import { auth, db, signOut, onAuthStateChanged, doc, setDoc, onSnapshot } from './firebase.js';
+import { auth, db, signOut, onAuthStateChanged, doc, setDoc, onSnapshot, getDoc, serverTimestamp } from './firebase.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const portalLoading = document.getElementById('portal-loading');
@@ -22,6 +22,25 @@ document.addEventListener('DOMContentLoaded', () => {
       window.location.href = '/login/';
       return;
     }
+
+    // Ensure user document exists in Firestore
+    const userRef = doc(db, 'users', user.uid);
+    getDoc(userRef).then(async (docSnap) => {
+      if (!docSnap.exists()) {
+        await setDoc(userRef, {
+          name: user.displayName || '',
+          email: user.email || '',
+          tokens: 5000,
+          tier: 'free',
+          createdAt: serverTimestamp(),
+          lastActive: serverTimestamp(),
+          ip: 'unknown'
+        });
+        console.log("Created new user document in Firestore from profile page");
+      }
+    }).catch(err => {
+      console.error("Error checking/creating user document on profile page:", err);
+    });
 
     // Populate profile sidebar
     profileName.textContent = user.displayName || 'User';

@@ -19,7 +19,7 @@ service cloud.firestore {
     // Users Collection: holds token balances, tiers, and user activity
     match /users/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
-      allow write: if request.auth != null && isAdmin();
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
 
       match /history/{document=**} {
         allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());

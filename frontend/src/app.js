@@ -1,4 +1,4 @@
-import { auth, db, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot, signInWithPopup, googleProvider } from './firebase.js';
+import { auth, db, signOut, onAuthStateChanged, doc, setDoc, getDoc, onSnapshot, signInWithPopup, googleProvider, serverTimestamp } from './firebase.js';
 
 let API_BASE = import.meta.env.VITE_API_URL || '';
 let currentUser = null;
@@ -116,6 +116,26 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       loadHistoryFromServer();
+
+      // Ensure user document exists in Firestore
+      const userRef = doc(db, 'users', user.uid);
+      getDoc(userRef).then(async (docSnap) => {
+        if (!docSnap.exists()) {
+          const defaultLimit = window.globalLimits?.free || 5000;
+          await setDoc(userRef, {
+            name: user.displayName || '',
+            email: user.email || '',
+            tokens: defaultLimit,
+            tier: 'free',
+            createdAt: serverTimestamp(),
+            lastActive: serverTimestamp(),
+            ip: 'unknown'
+          });
+          console.log("Initialized new user document in Firestore");
+        }
+      }).catch(err => {
+        console.error("Error checking/creating user document:", err);
+      });
 
       // Listen to token balance reactively
       if (unsubscribeUser) unsubscribeUser();
