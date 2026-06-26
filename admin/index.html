@@ -774,6 +774,17 @@
             </label>
           </div>
 
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+            <div>
+              <div style="font-weight: 600;">Suspend Developer API</div>
+              <div style="font-size: 0.9rem; color: var(--text-muted);">Disables and hides the Developer API integration for all users.</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="setting-suspend-developer-api">
+              <span class="slider"></span>
+            </label>
+          </div>
+
           <div class="form-group" style="margin-bottom: 20px;">
             <label>Ollama Host URL</label>
             <input type="text" id="setting-ollama-host" placeholder="http://127.0.0.1:11434">

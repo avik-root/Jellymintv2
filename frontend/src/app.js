@@ -271,6 +271,24 @@ document.addEventListener('DOMContentLoaded', () => {
           await setDoc(userRef, { lastActive: serverTimestamp() }, { merge: true });
           console.log("[Jellymint] User document lastActive updated");
         }
+
+        // Sync session details (including real client IP) to backend
+        try {
+          const idToken = await user.getIdToken();
+          fetch(`${API_BASE}/api/session`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${idToken}`
+            }
+          }).then(res => {
+            if (res.ok) return res.json();
+          }).then(sData => {
+            if (sData) console.log("[Jellymint] Session IP synced:", sData.ip);
+          }).catch(err => console.warn("[Jellymint] Session IP sync warning:", err));
+        } catch (sessionErr) {
+          console.warn("[Jellymint] Session IP sync warning:", sessionErr);
+        }
       } catch (err) {
         console.error("[Jellymint] Error initializing user doc, attempting direct write:", err);
         // FALLBACK: If getDoc failed (e.g. permissions), try a direct merge write

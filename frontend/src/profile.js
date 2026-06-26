@@ -204,6 +204,29 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // Sync session details (including real client IP) to backend
+    try {
+      const idToken = await user.getIdToken();
+      let currentApiUrl = 'https://spousal-scrabble-stamina.ngrok-free.dev';
+      if (window.globalSettingsData && window.globalSettingsData.apiUrl) {
+        currentApiUrl = window.globalSettingsData.apiUrl;
+      }
+      
+      fetch(`${currentApiUrl}/api/session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        }
+      }).then(res => {
+        if (res.ok) return res.json();
+      }).then(sData => {
+        if (sData) console.log("[Jellymint] Profile: Session IP synced:", sData.ip);
+      }).catch(err => console.warn("[Jellymint] Profile: Session IP sync warning:", err));
+    } catch (sessionErr) {
+      console.warn("[Jellymint] Profile: Session IP sync warning:", sessionErr);
+    }
+
     // Populate profile sidebar
     profileName.textContent = user.displayName || 'User';
     profileEmail.textContent = user.email || 'No email';
@@ -374,6 +397,27 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         checkLockdownStates(auth.currentUser, sData);
+
+        // Suspend Developer API logic
+        const apiNavBtn = document.getElementById('btn-nav-api');
+        if (apiNavBtn) {
+          if (sData.suspendDeveloperApi === true) {
+            apiNavBtn.style.display = 'none';
+            // If the user is currently on the API tab, redirect to overview
+            if (apiNavBtn.classList.contains('active')) {
+              apiNavBtn.classList.remove('active');
+              const overviewNavBtn = document.getElementById('btn-nav-overview');
+              if (overviewNavBtn) overviewNavBtn.classList.add('active');
+              
+              const apiView = document.getElementById('view-api');
+              const overviewView = document.getElementById('view-overview');
+              if (apiView) apiView.classList.remove('active');
+              if (overviewView) overviewView.classList.add('active');
+            }
+          } else {
+            apiNavBtn.style.display = '';
+          }
+        }
       }
       updateUserUI();
       

@@ -409,6 +409,7 @@ async function loadSettings() {
     document.getElementById('setting-tunnel-enabled').checked = data.tunnelEnabled !== false;
     document.getElementById('setting-maintenance-mode').checked = data.maintenanceMode || false;
     document.getElementById('setting-coming-soon-mode').checked = data.comingSoonMode || false;
+    document.getElementById('setting-suspend-developer-api').checked = data.suspendDeveloperApi || false;
     document.getElementById('setting-ollama-host').value = data.ollamaHost || 'http://127.0.0.1:11434';
     document.getElementById('setting-tier-free').value = data.limits?.free || 5000;
     document.getElementById('setting-tier-pro').value = data.limits?.pro || 50000;
@@ -452,6 +453,7 @@ document.getElementById('save-settings-btn').addEventListener('click', async () 
     tunnelEnabled: document.getElementById('setting-tunnel-enabled').checked,
     maintenanceMode: document.getElementById('setting-maintenance-mode').checked,
     comingSoonMode: document.getElementById('setting-coming-soon-mode').checked,
+    suspendDeveloperApi: document.getElementById('setting-suspend-developer-api').checked,
     ollamaHost: document.getElementById('setting-ollama-host').value.trim() || 'http://127.0.0.1:11434',
     defaultModel: document.getElementById('setting-default-model').value || '',
     limits: {
@@ -471,7 +473,8 @@ const togglesToAutoSave = [
   { id: 'setting-free-for-all', key: 'freeForAll' },
   { id: 'setting-tunnel-enabled', key: 'tunnelEnabled' },
   { id: 'setting-maintenance-mode', key: 'maintenanceMode' },
-  { id: 'setting-coming-soon-mode', key: 'comingSoonMode' }
+  { id: 'setting-coming-soon-mode', key: 'comingSoonMode' },
+  { id: 'setting-suspend-developer-api', key: 'suspendDeveloperApi' }
 ];
 
 togglesToAutoSave.forEach(t => {

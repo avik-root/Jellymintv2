@@ -81,6 +81,12 @@ async function verifyToken(req, res, next) {
       const userDoc = userQuery.docs[0];
       const userData = userDoc.data();
 
+      // Check if Developer API is suspended globally
+      const settingsSnap = await db.collection('settings').doc('global').get();
+      if (settingsSnap.exists && settingsSnap.data().suspendDeveloperApi === true) {
+        return res.status(403).json({ error: 'Forbidden: Developer API is suspended by the administrator.' });
+      }
+
       // Check if user is banned
       if (userData.banned === true) {
         return res.status(403).json({ error: 'Forbidden: Account is suspended.' });
@@ -201,6 +207,29 @@ app.get('/api/models', async (req, res) => {
   }
 });
 
+// Session/IP tracking endpoint
+app.post('/api/session', verifyToken, async (req, res) => {
+  const uid = req.user.uid;
+  let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+  if (ip && ip.includes(',')) {
+    ip = ip.split(',')[0].trim();
+  }
+
+  try {
+    const userRef = db.collection('users').doc(uid);
+    await userRef.set({
+      ip: ip,
+      lastActive: FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    console.log(`[Session] Updated IP to ${ip} for user ${uid}`);
+    return res.json({ success: true, ip });
+  } catch (err) {
+    console.error('[Session] Failed to update session IP:', err);
+    return res.status(500).json({ error: 'Failed to update session' });
+  }
+});
+
 // Proxy route to stream response from local Ollama model
 app.post('/api/chat', verifyToken, async (req, res) => {
   const { model, messages } = req.body;
@@ -248,7 +277,10 @@ app.post('/api/chat', verifyToken, async (req, res) => {
     let userTokens = 0;
     
     if (!settings.freeForAll) {
-      const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
+      let ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+      if (ip && ip.includes(',')) {
+        ip = ip.split(',')[0].trim();
+      }
       
       if (!userSnap.exists) {
         // New user — use merge to avoid overwriting frontend-created doc
