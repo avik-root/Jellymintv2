@@ -69,7 +69,52 @@ async function verifyToken(req, res, next) {
     return res.status(401).json({ error: 'Unauthorized: Missing token' });
   }
 
-  const token = authHeader.split('Bearer ')[1];
+  const token = authHeader.split('Bearer ')[1].trim();
+
+  // Support for custom Developer API Keys
+  if (token.startsWith('jm_live_')) {
+    try {
+      const userQuery = await db.collection('users').where('apiKey', '==', token).limit(1).get();
+      if (userQuery.empty) {
+        return res.status(401).json({ error: 'Unauthorized: Invalid API key.' });
+      }
+      const userDoc = userQuery.docs[0];
+      const userData = userDoc.data();
+
+      // Check if user is banned
+      if (userData.banned === true) {
+        return res.status(403).json({ error: 'Forbidden: Account is suspended.' });
+      }
+
+      // Check if user has PRO or Advanced subscription (Admins are exempt)
+      const tier = userData.tier || 'free';
+      const emailLower = (userData.email || '').trim().toLowerCase();
+      let isAdmin = emailLower === 'aviksamantaofficial@gmail.com';
+      if (!isAdmin && emailLower) {
+        const adminDoc = await db.collection('admins').doc(emailLower).get();
+        if (adminDoc.exists) {
+          isAdmin = true;
+        }
+      }
+
+      if (tier === 'free' && !isAdmin) {
+        return res.status(403).json({ error: 'Forbidden: Developer API access requires a PRO or Advanced subscription.' });
+      }
+
+      req.user = {
+        uid: userDoc.id,
+        email: userData.email || '',
+        name: userData.name || '',
+        isApiKey: true
+      };
+      return next();
+    } catch (error) {
+      console.error('API Key verification error:', error);
+      return res.status(500).json({ error: 'Internal server error validating API Key.' });
+    }
+  }
+
+  // Support for standard Firebase JWT ID Tokens
   try {
     const decoded = await getAuth().verifyIdToken(token);
     req.user = decoded;
