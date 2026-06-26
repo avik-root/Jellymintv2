@@ -22,9 +22,11 @@
       --text-muted: #64748b;
       --text-secondary: #94a3b8;
       --text-primary: #f8fafc;
-      --glass-bg: rgba(15, 23, 42, 0.6);
+      --glass-bg: rgba(255, 255, 255, 0.03);
       --glass-border: rgba(255, 255, 255, 0.08);
-      --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      --glass-shadow: 0 30px 60px rgba(0, 0, 0, 0.45), 
+                      inset 0 1px 0 rgba(255, 255, 255, 0.1),
+                      0 0 40px rgba(20, 184, 166, 0.03);
     }
 
     /* Admin Specific Overrides */
@@ -51,7 +53,8 @@
     }
     .login-card {
       background: var(--glass-bg);
-      backdrop-filter: blur(16px);
+      backdrop-filter: blur(30px) saturate(190%);
+      -webkit-backdrop-filter: blur(30px) saturate(190%);
       padding: 3rem;
       border-radius: 24px;
       text-align: center;
@@ -61,6 +64,14 @@
       width: 90%;
       position: relative;
       overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .login-card:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: rgba(16, 185, 129, 0.25);
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.55), 
+                  inset 0 1px 0 rgba(255, 255, 255, 0.15),
+                  0 0 50px rgba(16, 185, 129, 0.15);
     }
     .login-card::before {
       content: '';
