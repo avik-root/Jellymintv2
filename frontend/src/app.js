@@ -435,12 +435,16 @@ document.addEventListener('DOMContentLoaded', () => {
         </button>
       `;
 
-      item.addEventListener('click', (e) => {
-        // Don't trigger if clicked delete btn
-        if (e.target.closest('.delete-session-btn')) {
+      // Direct listener with stopPropagation for safe deletion (crucial for mobile touch events)
+      const deleteBtn = item.querySelector('.delete-session-btn');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
           deleteSession(session.id);
-          return;
-        }
+        });
+      }
+
+      item.addEventListener('click', () => {
         loadSession(session.id);
       });
 

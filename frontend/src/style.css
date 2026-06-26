@@ -1209,4 +1209,8 @@ body.sidebar-closed .menu-btn {
     grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
     gap: 12px;
   }
+
+  .delete-session-btn {
+    opacity: 1 !important;
+  }
 }

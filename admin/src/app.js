@@ -131,7 +131,25 @@ document.querySelectorAll('.nav-item').forEach(item => {
     e.currentTarget.classList.add('active');
     
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById('view-' + e.currentTarget.dataset.target).classList.add('active');
+    
+    const target = e.currentTarget.dataset.target;
+    const targetView = document.getElementById('view-' + target);
+    if (targetView) {
+      targetView.classList.add('active');
+    }
+    
+    // Refresh/resize charts to prevent Chart.js 0-size collapse when container was hidden
+    if (target === 'tokens-chart') {
+      updateTokenUsageChart();
+    } else if (target === 'analytics') {
+      if (currentUsers && currentUsers.length > 0) {
+        updateCharts(currentUsers);
+      }
+    } else if (target === 'monitor') {
+      if (cpuChartInstance) cpuChartInstance.resize();
+      if (ramChartInstance) ramChartInstance.resize();
+      if (gpuChartInstance) gpuChartInstance.resize();
+    }
   });
 });
 
