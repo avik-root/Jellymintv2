@@ -422,14 +422,23 @@ body.sidebar-closed .menu-btn {
 }
 
 .model-selector-wrapper {
-  display: flex;
-  align-items: center;
-  background-color: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-color);
-  border-radius: 50px;
-  padding: 2px 4px 2px 14px;
-  gap: 8px;
-  transition: all 0.2s ease;
+  display: none !important;
+}
+
+/* Sidebar Backdrop for Mobile */
+.sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(2, 4, 12, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .model-selector-wrapper:focus-within {
@@ -1099,6 +1108,8 @@ body.sidebar-closed .menu-btn {
     position: absolute;
     left: 0;
     top: 0;
+    width: var(--sidebar-width);
+    max-width: 80vw;
     height: 100%;
     z-index: 1000;
     transform: translateX(0);
@@ -1108,6 +1119,11 @@ body.sidebar-closed .menu-btn {
   .sidebar.collapsed {
     transform: translateX(-100%);
     margin-left: 0 !important;
+  }
+
+  body:not(.sidebar-closed) .sidebar-backdrop {
+    opacity: 1;
+    pointer-events: auto;
   }
   
   .menu-btn {

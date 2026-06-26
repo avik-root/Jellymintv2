@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const sidebar = document.getElementById('sidebar');
   const sidebarToggleOpen = document.getElementById('sidebar-toggle-open');
   const sidebarToggleClose = document.getElementById('sidebar-toggle-close');
+  const sidebarBackdrop = document.getElementById('sidebar-backdrop');
   const modelSelect = document.getElementById('model-select');
   const refreshModelsBtn = document.getElementById('refresh-models-btn');
   const ollamaErrorBanner = document.getElementById('ollama-error-banner');
@@ -247,6 +248,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   sidebarToggleClose.addEventListener('click', () => updateSidebarState(true));
   sidebarToggleOpen.addEventListener('click', () => updateSidebarState(false));
+  if (sidebarBackdrop) {
+    sidebarBackdrop.addEventListener('click', () => updateSidebarState(true));
+  }
 
   if (window.innerWidth <= 768) {
     updateSidebarState(true);
@@ -499,6 +503,10 @@ document.addEventListener('DOMContentLoaded', () => {
       welcomeScreen.classList.add('hidden');
       messagesContainer.classList.remove('hidden');
       scrollToBottom();
+    }
+
+    if (window.innerWidth <= 768) {
+      updateSidebarState(true);
     }
   }
 
