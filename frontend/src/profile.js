@@ -33,6 +33,19 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // Fetch settings dynamically if not passed
+      let currentSettings = settingsData;
+      if (!currentSettings) {
+        try {
+          const settingsSnap = await getDoc(doc(db, 'settings', 'global'));
+          if (settingsSnap.exists()) {
+            currentSettings = settingsSnap.data();
+          }
+        } catch (err) {
+          console.warn("Could not fetch global settings in lockdown check:", err);
+        }
+      }
+
       // 1. Fetch user doc to check ban
       const userDoc = await getDoc(doc(db, 'users', user.uid));
       if (userDoc.exists() && userDoc.data().banned === true) {
@@ -75,7 +88,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const port = window.location.port;
       const isAdminDomain = host.includes('admin') || port === '5174';
 
-      if (!isAdminDomain && settingsData && settingsData.comingSoonMode === true) {
+      if (!isAdminDomain && currentSettings && currentSettings.comingSoonMode === true) {
         window.location.href = '/coming-soon/';
         isCheckingLockdowns = false;
         return;
@@ -97,7 +110,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       // 4. Maintenance Overlay
-      if (settingsData && settingsData.maintenanceMode === true) {
+      if (currentSettings && currentSettings.maintenanceMode === true) {
         const overlay = document.createElement('div');
         overlay.id = 'lockdown-maint-overlay';
         Object.assign(overlay.style, {
