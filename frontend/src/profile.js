@@ -25,8 +25,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Ensure user document exists in Firestore with all required fields
     const userRef = doc(db, 'users', user.uid);
-    getDoc(userRef).then(async (docSnap) => {
-      if (!docSnap.exists()) {
+    try {
+      const docSnap = await getDoc(userRef);
+      if (!docSnap.exists() || !docSnap.data().email) {
+        const existingData = docSnap.exists() ? docSnap.data() : {};
+        await setDoc(userRef, {
+          name: existingData.name || user.displayName || '',
+          email: existingData.email || user.email || '',
+          photoURL: existingData.photoURL || user.photoURL || '',
+          tokens: (existingData.tokens !== undefined && existingData.tokens !== null) ? existingData.tokens : 5000,
+          tier: existingData.tier || 'free',
+          createdAt: existingData.createdAt || serverTimestamp(),
+          lastActive: serverTimestamp(),
+          ip: existingData.ip || 'unknown'
+        });
+        console.log("[Jellymint] User document created/repaired from profile page");
+      } else {
+        await setDoc(userRef, { lastActive: serverTimestamp() }, { merge: true });
+      }
+    } catch (err) {
+      console.error("[Jellymint] Profile: Error initializing user doc, attempting fallback:", err);
+      try {
         await setDoc(userRef, {
           name: user.displayName || '',
           email: user.email || '',
@@ -36,28 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
           createdAt: serverTimestamp(),
           lastActive: serverTimestamp(),
           ip: 'unknown'
-        });
-        console.log("[Jellymint] Created new user document from profile page");
-      } else {
-        // Existing user — fill in any missing critical fields
-        const existingData = docSnap.data();
-        const updates = { lastActive: serverTimestamp() };
-        
-        if (!existingData.name && user.displayName) updates.name = user.displayName;
-        if (!existingData.email && user.email) updates.email = user.email;
-        if (!existingData.photoURL && user.photoURL) updates.photoURL = user.photoURL;
-        if (!existingData.tier) updates.tier = 'free';
-        if (existingData.tokens === undefined || existingData.tokens === null) {
-          updates.tokens = 5000;
-        }
-        if (!existingData.createdAt) updates.createdAt = serverTimestamp();
-        
-        await setDoc(userRef, updates, { merge: true });
-        console.log("[Jellymint] Updated existing user document with missing fields (profile)");
+        }, { merge: true });
+        console.log("[Jellymint] Profile: Fallback user document written");
+      } catch (fallbackErr) {
+        console.error("[Jellymint] Profile: CRITICAL - all write attempts failed:", fallbackErr);
       }
-    }).catch(err => {
-      console.error("Error checking/creating user document on profile page:", err);
-    });
+    }
 
     // Populate profile sidebar
     profileName.textContent = user.displayName || 'User';

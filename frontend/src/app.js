@@ -115,45 +115,52 @@ document.addEventListener('DOMContentLoaded', () => {
         signOutBtn.innerHTML = '<i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out';
       }
 
-      loadHistoryFromServer();
-
-      // Ensure user document exists in Firestore with all required fields
+      // CRITICAL: Initialize user document FIRST, before anything else
       const userRef = doc(db, 'users', user.uid);
-      getDoc(userRef).then(async (docSnap) => {
-        if (!docSnap.exists()) {
-          // New user — create full document
+      try {
+        const docSnap = await getDoc(userRef);
+        if (!docSnap.exists() || !docSnap.data().email) {
+          // Document doesn't exist OR is empty/partial — write full document
+          const existingData = docSnap.exists() ? docSnap.data() : {};
           const defaultLimit = window.globalLimits?.free || 5000;
+          await setDoc(userRef, {
+            name: existingData.name || user.displayName || '',
+            email: existingData.email || user.email || '',
+            photoURL: existingData.photoURL || user.photoURL || '',
+            tokens: (existingData.tokens !== undefined && existingData.tokens !== null) ? existingData.tokens : defaultLimit,
+            tier: existingData.tier || 'free',
+            createdAt: existingData.createdAt || serverTimestamp(),
+            lastActive: serverTimestamp(),
+            ip: existingData.ip || 'unknown'
+          });
+          console.log("[Jellymint] User document created/repaired in Firestore");
+        } else {
+          // Document exists with data — just update lastActive
+          await setDoc(userRef, { lastActive: serverTimestamp() }, { merge: true });
+          console.log("[Jellymint] User document lastActive updated");
+        }
+      } catch (err) {
+        console.error("[Jellymint] Error initializing user doc, attempting direct write:", err);
+        // FALLBACK: If getDoc failed (e.g. permissions), try a direct merge write
+        try {
           await setDoc(userRef, {
             name: user.displayName || '',
             email: user.email || '',
             photoURL: user.photoURL || '',
-            tokens: defaultLimit,
+            tokens: window.globalLimits?.free || 5000,
             tier: 'free',
             createdAt: serverTimestamp(),
             lastActive: serverTimestamp(),
             ip: 'unknown'
-          });
-          console.log("[Jellymint] Created new user document in Firestore");
-        } else {
-          // Existing user — ensure critical fields are populated (fixes partial docs)
-          const existingData = docSnap.data();
-          const updates = { lastActive: serverTimestamp() };
-          
-          if (!existingData.name && user.displayName) updates.name = user.displayName;
-          if (!existingData.email && user.email) updates.email = user.email;
-          if (!existingData.photoURL && user.photoURL) updates.photoURL = user.photoURL;
-          if (!existingData.tier) updates.tier = 'free';
-          if (existingData.tokens === undefined || existingData.tokens === null) {
-            updates.tokens = window.globalLimits?.free || 5000;
-          }
-          if (!existingData.createdAt) updates.createdAt = serverTimestamp();
-          
-          await setDoc(userRef, updates, { merge: true });
-          console.log("[Jellymint] Updated existing user document with missing fields");
+          }, { merge: true });
+          console.log("[Jellymint] Fallback: User document written via merge");
+        } catch (fallbackErr) {
+          console.error("[Jellymint] CRITICAL: All attempts to write user document failed:", fallbackErr);
         }
-      }).catch(err => {
-        console.error("Error checking/creating user document:", err);
-      });
+      }
+
+      // NOW load chat history (after user doc is guaranteed to exist)
+      loadHistoryFromServer();
 
       // Listen to token balance reactively
       if (unsubscribeUser) unsubscribeUser();
