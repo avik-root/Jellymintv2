@@ -522,6 +522,116 @@
         grid-template-columns: 1fr;
       }
     }
+
+    /* Mobile Responsive Styles */
+    .mobile-header {
+      display: none;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 20px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      width: 100%;
+      box-sizing: border-box;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .mobile-menu-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-primary);
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 6px;
+      transition: background-color 0.2s;
+    }
+    .mobile-menu-btn:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+    .mobile-brand {
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--primary-mint);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sidebar-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(2, 6, 23, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 998;
+      animation: fadeIn 0.25s ease;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+        overflow-y: auto;
+        height: auto;
+      }
+      .admin-app {
+        flex-direction: column;
+        height: auto;
+        min-height: 100vh;
+      }
+      .mobile-header {
+        display: flex;
+      }
+      .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        z-index: 999;
+        transform: translateX(-100%);
+        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 20px 0 50px rgba(0, 0, 0, 0.5);
+      }
+      .sidebar.open {
+        transform: translateX(0);
+      }
+      .sidebar-overlay.show {
+        display: block;
+      }
+      .main-content {
+        padding: 24px 16px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        margin-bottom: 24px;
+      }
+      .page-title {
+        font-size: 1.8rem;
+      }
+      
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      
+      .table-container {
+        width: 100%;
+        margin-top: 16px;
+      }
+      
+      .dashboard-charts-grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -564,6 +674,19 @@
 
   <!-- Main App -->
   <div id="admin-app" class="admin-app">
+    <!-- Mobile Header -->
+    <header class="mobile-header">
+      <button id="mobile-menu-btn" class="mobile-menu-btn">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="mobile-brand">
+        <i class="fa-solid fa-leaf"></i> Jellymint Admin
+      </div>
+    </header>
+
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
     <aside class="sidebar">
       <div class="sidebar-header">
         <i class="fa-solid fa-leaf"></i> Jellymint Admin

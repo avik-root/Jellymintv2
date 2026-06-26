@@ -160,6 +160,14 @@ document.querySelectorAll('.nav-item').forEach(item => {
       targetView.classList.add('active');
     }
     
+    // Close mobile sidebar on navigation
+    const sidebar = document.querySelector('.sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+    if (sidebar && sidebar.classList.contains('open')) {
+      sidebar.classList.remove('open');
+      if (sidebarOverlay) sidebarOverlay.classList.remove('show');
+    }
+    
     // Refresh/resize charts to prevent Chart.js 0-size collapse when container was hidden
     if (target === 'tokens-chart') {
       updateTokenUsageChart();
@@ -174,6 +182,29 @@ document.querySelectorAll('.nav-item').forEach(item => {
     }
   });
 });
+
+// Mobile Sidebar Toggle Logic
+function initMobileMenu() {
+  const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+  const sidebar = document.querySelector('.sidebar');
+  const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+  if (mobileMenuBtn && sidebar && sidebarOverlay) {
+    const toggleSidebar = () => {
+      sidebar.classList.toggle('open');
+      sidebarOverlay.classList.toggle('show');
+    };
+
+    mobileMenuBtn.addEventListener('click', toggleSidebar);
+    sidebarOverlay.addEventListener('click', toggleSidebar);
+  }
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initMobileMenu);
+} else {
+  initMobileMenu();
+}
 
 // --- Dashboard Logic ---
 let activityChartInstance = null;
