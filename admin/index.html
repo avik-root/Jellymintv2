@@ -168,7 +168,7 @@
     
     .main-content {
       flex: 1;
-      overflow-y: auto;
+      overflow-y: auto !important;
       padding: 40px;
       background: var(--bg-primary);
     }
@@ -557,7 +557,10 @@
         <i class="fa-solid fa-leaf"></i> Jellymint Admin
       </div>
       <div class="nav-links">
-        <div class="nav-item active" data-target="dashboard"><i class="fa-solid fa-chart-pie"></i> Dashboard</div>
+        <div class="nav-item active" data-target="dashboard"><i class="fa-solid fa-chart-pie"></i> Overview</div>
+        <div class="nav-item" data-target="monitor"><i class="fa-solid fa-server"></i> System Monitor</div>
+        <div class="nav-item" data-target="analytics"><i class="fa-solid fa-chart-line"></i> User Analytics</div>
+        <div class="nav-item" data-target="tokens-chart"><i class="fa-solid fa-coins"></i> Token Usage</div>
         <div class="nav-item" data-target="users"><i class="fa-solid fa-users"></i> Users & Tokens</div>
         <div class="nav-item" data-target="settings"><i class="fa-solid fa-gear"></i> Global Settings</div>
       </div>
@@ -568,7 +571,7 @@
     </aside>
 
     <main class="main-content">
-      <!-- Dashboard View -->
+      <!-- Overview View -->
       <div id="view-dashboard" class="view active">
         <div class="page-header">
           <div class="page-title">Overview</div>
@@ -592,11 +595,13 @@
             <div class="stat-value" id="stat-model" style="font-size: 1.15rem; margin-top: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600;">Loading...</div>
           </div>
         </div>
+      </div>
 
-        <!-- Live Resource Monitor Section -->
-        <div class="page-header" style="margin-top: 40px; margin-bottom: 20px;">
-          <div class="page-title" style="font-size: 1.5rem; background: none; -webkit-text-fill-color: var(--text-primary); font-weight: 600; display: flex; align-items: center; gap: 8px;">
-            <i class="fa-solid fa-server" style="color: var(--primary-mint);"></i> Live Resource Monitor
+      <!-- System Monitor View -->
+      <div id="view-monitor" class="view">
+        <div class="page-header">
+          <div class="page-title" style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-server" style="color: var(--primary-mint);"></i> System Monitor
           </div>
         </div>
         <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 32px;">
@@ -631,28 +636,43 @@
             </div>
           </div>
         </div>
+      </div>
 
-        <div class="dashboard-charts-grid">
+      <!-- User Analytics View -->
+      <div id="view-analytics" class="view">
+        <div class="page-header">
+          <div class="page-title" style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-chart-line" style="color: var(--primary-mint);"></i> User Analytics
+          </div>
+        </div>
+        <div class="dashboard-charts-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; margin-bottom: 32px;">
           <div class="stat-card" style="display: flex; flex-direction: column;">
             <div class="stat-label" style="margin-bottom: 15px; font-weight: 600;">Daily Active Users (Last 7 Days)</div>
-            <div style="flex: 1; min-height: 250px; position: relative;">
+            <div style="height: 250px; position: relative; width: 100%;">
               <canvas id="activity-chart"></canvas>
             </div>
           </div>
           <div class="stat-card" style="display: flex; flex-direction: column;">
             <div class="stat-label" style="margin-bottom: 15px; font-weight: 600;">User Tier Distribution</div>
-            <div style="flex: 1; min-height: 250px; position: relative; display: flex; justify-content: center; align-items: center;">
+            <div style="height: 250px; position: relative; width: 100%; display: flex; justify-content: center; align-items: center;">
               <canvas id="tiers-chart"></canvas>
             </div>
           </div>
         </div>
+      </div>
 
-        <!-- Live Token Usage Graph [Total] -->
-        <div class="stat-card" style="margin-top: 24px; display: flex; flex-direction: column;">
+      <!-- Token Usage View -->
+      <div id="view-tokens-chart" class="view">
+        <div class="page-header">
+          <div class="page-title" style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-coins" style="color: var(--primary-mint);"></i> Daily Token Usage
+          </div>
+        </div>
+        <div class="stat-card" style="display: flex; flex-direction: column;">
           <div class="stat-label" style="margin-bottom: 15px; font-weight: 600; display: flex; align-items: center; gap: 8px;">
             <i class="fa-solid fa-coins" style="color: var(--primary-mint);"></i> Daily System Token Usage [Total] (Last 7 Days)
           </div>
-          <div style="height: 280px; position: relative;">
+          <div style="height: 320px; position: relative; width: 100%;">
             <canvas id="token-usage-chart"></canvas>
           </div>
         </div>
