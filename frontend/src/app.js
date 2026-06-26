@@ -117,21 +117,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
       loadHistoryFromServer();
 
-      // Ensure user document exists in Firestore
+      // Ensure user document exists in Firestore with all required fields
       const userRef = doc(db, 'users', user.uid);
       getDoc(userRef).then(async (docSnap) => {
         if (!docSnap.exists()) {
+          // New user — create full document
           const defaultLimit = window.globalLimits?.free || 5000;
           await setDoc(userRef, {
             name: user.displayName || '',
             email: user.email || '',
+            photoURL: user.photoURL || '',
             tokens: defaultLimit,
             tier: 'free',
             createdAt: serverTimestamp(),
             lastActive: serverTimestamp(),
             ip: 'unknown'
           });
-          console.log("Initialized new user document in Firestore");
+          console.log("[Jellymint] Created new user document in Firestore");
+        } else {
+          // Existing user — ensure critical fields are populated (fixes partial docs)
+          const existingData = docSnap.data();
+          const updates = { lastActive: serverTimestamp() };
+          
+          if (!existingData.name && user.displayName) updates.name = user.displayName;
+          if (!existingData.email && user.email) updates.email = user.email;
+          if (!existingData.photoURL && user.photoURL) updates.photoURL = user.photoURL;
+          if (!existingData.tier) updates.tier = 'free';
+          if (existingData.tokens === undefined || existingData.tokens === null) {
+            updates.tokens = window.globalLimits?.free || 5000;
+          }
+          if (!existingData.createdAt) updates.createdAt = serverTimestamp();
+          
+          await setDoc(userRef, updates, { merge: true });
+          console.log("[Jellymint] Updated existing user document with missing fields");
         }
       }).catch(err => {
         console.error("Error checking/creating user document:", err);

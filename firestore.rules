@@ -30,5 +30,11 @@ service cloud.firestore {
       allow read: if true;
       allow write: if request.auth != null && isAdmin();
     }
+
+    // Token Usage Collection: daily aggregated usage tracking
+    match /token_usage/{dateId} {
+      allow read: if request.auth != null && isAdmin();
+      allow write: if request.auth != null && isAdmin();
+    }
   }
 }

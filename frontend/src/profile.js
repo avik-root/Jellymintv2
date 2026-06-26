@@ -23,20 +23,37 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Ensure user document exists in Firestore
+    // Ensure user document exists in Firestore with all required fields
     const userRef = doc(db, 'users', user.uid);
     getDoc(userRef).then(async (docSnap) => {
       if (!docSnap.exists()) {
         await setDoc(userRef, {
           name: user.displayName || '',
           email: user.email || '',
+          photoURL: user.photoURL || '',
           tokens: 5000,
           tier: 'free',
           createdAt: serverTimestamp(),
           lastActive: serverTimestamp(),
           ip: 'unknown'
         });
-        console.log("Created new user document in Firestore from profile page");
+        console.log("[Jellymint] Created new user document from profile page");
+      } else {
+        // Existing user — fill in any missing critical fields
+        const existingData = docSnap.data();
+        const updates = { lastActive: serverTimestamp() };
+        
+        if (!existingData.name && user.displayName) updates.name = user.displayName;
+        if (!existingData.email && user.email) updates.email = user.email;
+        if (!existingData.photoURL && user.photoURL) updates.photoURL = user.photoURL;
+        if (!existingData.tier) updates.tier = 'free';
+        if (existingData.tokens === undefined || existingData.tokens === null) {
+          updates.tokens = 5000;
+        }
+        if (!existingData.createdAt) updates.createdAt = serverTimestamp();
+        
+        await setDoc(userRef, updates, { merge: true });
+        console.log("[Jellymint] Updated existing user document with missing fields (profile)");
       }
     }).catch(err => {
       console.error("Error checking/creating user document on profile page:", err);

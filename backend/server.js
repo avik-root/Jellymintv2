@@ -179,16 +179,17 @@ app.post('/api/chat', verifyToken, async (req, res) => {
       const ip = req.ip || req.headers['x-forwarded-for'] || 'unknown';
       
       if (!userSnap.exists) {
-        // New user
+        // New user — use merge to avoid overwriting frontend-created doc
         userTokens = settings.limits?.free || 5000;
         await userRef.set({ 
-          name: req.user.name || '',
+          name: req.user.name || req.user.email || '',
           email: req.user.email || '',
           tokens: userTokens, 
           tier: 'free', 
+          createdAt: FieldValue.serverTimestamp(),
           lastActive: FieldValue.serverTimestamp(), 
           ip: ip 
-        });
+        }, { merge: true });
       } else {
         const data = userSnap.data();
         userTokens = data.tokens || 0;
@@ -203,12 +204,17 @@ app.post('/api/chat', verifyToken, async (req, res) => {
            userTokens = settings.limits?.[tier] || 5000;
         }
         
-        // Always update IP and last active
-        await userRef.update({
+        // Build update payload — fill missing fields, never overwrite existing name/email
+        const updatePayload = {
           ip: ip,
           lastActive: FieldValue.serverTimestamp(),
           tokens: userTokens
-        });
+        };
+        if (!data.name && req.user.name) updatePayload.name = req.user.name;
+        if (!data.email && req.user.email) updatePayload.email = req.user.email;
+        if (!data.tier) updatePayload.tier = 'free';
+        
+        await userRef.set(updatePayload, { merge: true });
       }
       
       if (userTokens <= 0) {
